@@ -1,4 +1,4 @@
-## 声明方式
+## 两种声明方式
 
 - launchMode  
 
@@ -12,7 +12,7 @@
 
 ###  launchModel 
 
-> Task 任务(栈)  Tasks 任务组(栈)   PS：栈是其结构，加入该字眼方便后期理解 
+> Task 任务(栈)  Tasks 任务(栈)组  PS：栈是其结构，加入该字眼方便后期理解 
 >
 > Back Stack 返回栈
 
@@ -30,19 +30,23 @@
 
   如果待启动 Activity 已经位于源 Activity 所属的任务栈的栈顶时，不会创建新的 Activity 实例，而是直接使用栈顶的 Activity 实例，并回调其 `onNewIntent()`方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，否则就在栈顶创建一个新的 Activity  实例
 
+  - 推送点击消息界面
+
 - singleTask 栈内复用模式
 
   如果另外的任务栈中已存在待启动 Activity 的实例，则不会创建新的 Activity 实例，而是直接使用栈内的 Activity 实例，并回调其 `onNewIntent()` 方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，同时清空任务栈里该 Activity 实例上所有的 Activity 实例，Activity 一次只能有一个实例存在
+
+  - 应用首页
 
 - singleInstance 单实例模式
 
   首次启动时创建一个任务栈，该 Activity 实例始终在这个任务栈中，同时该任务栈中且只有这一个实例，如果存在则不新建，所以 Activity 实例和任务栈都是全局唯一的
 
-  呼叫来电界面
+  - 拨打电话界面、呼叫来电界面
 
   
 
-  ## Intent flag
+  ### Intent flag
 
   - FLAG_ACTIVITY_NEW_TASK
 
@@ -78,7 +82,7 @@
 
 假设一个 Activity 频繁启动和退出，而每次启动都创建新实例 造成资源浪费，所以需要创造出启动模式去解决这个问题
 
-### 任务栈
+任务栈
 
 
 

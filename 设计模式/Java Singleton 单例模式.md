@@ -1,13 +1,17 @@
+单例模式
+
 - 属于创建型模式
+
+- 自行完成实例化，私有化构造函数
 
 单例模式的目标
 
 - 实例唯一性
 - 线程安全性
 
-任何情况都需要确保一个类只存在一个实例，不会因为多线程的访问而导致创建了多个实例，同时也不会因为多线程而引入新的效率问题
+任何情况都需要确保一个类只存在一个实例，不会因为多线程的访问而导致创建多个实例，同时也不会因为多线程而引入新的效率问题
 
-1 饿汉式
+## 1 饿汉式
 
 ```java
 //原理：通过 JVM 在加载类的时候来完成静态对象的初始化，而这个过程本身就是线程安全的（类初始化锁保证线程安全），无法实现懒加载，完全依赖虚拟机加载类的策略进行加载
@@ -44,9 +48,9 @@ public class Singleton {
 
 - 通过变通避免了多线程的同步问题
 - 延长了类加载的时间，效率比较低
-- 已经加载，如果最终未使用，就浪费了
+- 已经加载，如果最终未使用，就造成了浪费资源
 
-2 懒汉式
+## 2 懒汉式
 
 ```java
 //2.1 线程不安全
@@ -63,7 +67,7 @@ public class Singleton {
         return sInstance;
     }
 }
-//2.2 上面的例子 getInstance() 方法加 synchronized 关键字
+//2.2 上面的例子 getInstance() 方法加 synchronized 关键字，线程安全
 public class Singleton {
     private static Singleton sInstance;
     private Singleton() {}
@@ -75,7 +79,7 @@ public class Singleton {
         return sInstance;
     }
 }
-//2.3 实例化外面加了 synchronized(Singleton.class) { } 代码块
+//2.3 实例化外面加了 synchronized(Singleton.class) { } 代码块，线程不安全
 public class Singleton {
 	private static Singleton sInstance;
 	private Singleton() {}
@@ -89,7 +93,7 @@ public class Singleton {
     return sInstance;
 	}
 }
-//2.4 上面的例子 if 判断外面加 synchronized(Singleton.class) { } 代码块，其实和 2.2 套路一样
+//2.4 上面的例子 if 判断外面加 synchronized(Singleton.class) {} 代码块，其实和 2.2 一样，线程安全
 public class Singleton {
     private static Singleton sInstance;
     private Singleton() { }
@@ -104,17 +108,16 @@ public class Singleton {
 }
 ```
 
-- 这三种线程不安全
-
-3  双重检查锁
+## 3  双重检查锁
 
 ```java
-// Double-Checked Locking 双重检查锁 DCL
+// Double-Checked Locking 双重检查锁 DCL，进行了两次判空
 public class Singleton {
     //volatile 关键字声明，会在编译时加 lock，禁止了指令重排序
     private static volatile Singleton sInstance;
     private Singleton() {}
     public static Singleton getInstance() {
+        //判断一次避免不必要的同步锁
         if (sInstance == null) {
             synchronized (Singleton.class) {
                 if (sInstance == null) {
@@ -129,7 +132,21 @@ public class Singleton {
 
 - 线程安全，延迟加载，效率较高
 
-4 静态内部类
+- 需要使用 volatile 的原因
+
+  系统执行 sInstance = new Singleton() 这段代码不是一次性完成的，大概分为三步指令
+
+  1 为需要创建的 Singleton 实例分配内存
+  2 调用对应 Singleton 的构造方法
+  3 将 sInstance 指向前面分配的内存空间，此时 sInstance 不为 null 了
+
+  而指令重排序可能会出现先执行 3 再执行 2 的情况，所以当一个线程执行了 1 和 3 但还没执行 2 (后面走完就会创建一个实例)，而此时另一个线程就能通过空判断而创建了另一个实例
+
+  
+
+  
+
+## 4 静态内部类
 
 ```java
 //
@@ -148,7 +165,7 @@ public class Singleton {
 
 - 避免了线程不安全，延迟加载，效率高
 
-5 枚举式
+## 5 枚举式
 
 ```java
 public enum Singleton {
@@ -160,6 +177,44 @@ public enum Singleton {
 
 - 避免了线程不安全
 - 防止反序列化重新创建新的对象
+
+
+
+注意
+
+1 以上方案不考虑反序列化的情况
+
+- 反序列化时会调用 readResolve() 方法重新生成一个实例，所以需要覆写直接返回单例对象
+
+2 通过用 Map 存值的方式也可以实现单例的概念
+
+3 Android 有自带的 Singleton 抽象类
+
+```java
+
+/**
+ * Singleton helper class for lazily initialization.
+ *
+ * Modeled after frameworks/base/include/utils/Singleton.h
+ *
+ * @hide
+ */
+//源码位置 /frameworks/base/core/java/android/util/Singleton.java
+public abstract class Singleton<T> {
+    private T mInstance;
+
+    protected abstract T create();
+
+    public final T get() {
+        synchronized (this) {
+            if (mInstance == null) {
+                mInstance = create();
+            }
+            return mInstance;
+        }
+    }
+}
+```
 
 
 
