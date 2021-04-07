@@ -45,10 +45,10 @@ OuterClass.InnerClass innerClass2 = new OuterClass().new InnerClass();
 
 ```java
 public class OuterClass {
-    private String outerField ;
+    private String outerField;
     public void outerMethod() {
         System.out.println(outerField);
-        //局部变量LocalVariable
+        //LocalVariable 局部变量
         String localField ;
         //方法(局部)内部类定义在外部类的方法中，参考局部变量，不能使用修饰符
         class MethodInnerClass {
@@ -72,7 +72,7 @@ public class OuterClass {
 }
 ```
 
-### 匿名内部类
+### Anonymous 匿名内部类
 
 - 其实就是一个没有名字的方法(局部)内部类
 - 没有名字所以没有构造方法
@@ -91,6 +91,10 @@ public class OuterClass {
 
 
 
+
+local class
+
+member class
 
 
 

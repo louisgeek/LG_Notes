@@ -12,6 +12,7 @@ new Thread(){
 ```
 
 ```java
+//继承 Thread 类
 class MyThread extends Thread {
     @Override
     public void run() {
@@ -31,7 +32,7 @@ class MyThread extends Thread {
 
   
 
-2. 通过实现 Runnable 接口，传入 Thread 启动
+2. 通过实现 Runnable 接口，然后传入 Thread 启动
 
 ```java
 //需要借助 Thread 类
@@ -61,7 +62,7 @@ new Thread(new MyRunnable()).start();
 
   
 
-3. 通过实现 Callable 接口，借助 FutureTask 类，传入 Thread 启动
+3. 通过实现 Callable 接口，借助 FutureTask 类，然后传入 Thread 启动
 
 ```java
 //同样需要借助 Thread 类
@@ -91,12 +92,12 @@ String result=futureTask.get();
 
 - 类似于 Runnable 接口
 
-- 有返回值
+- 可以有返回值
 
 - 可以抛出异常
 
 
 
-总结：三种方式最终还是通过  Thread 类对象来真正创建线程的
+总结：三种方式最终都是通过  Thread 类对象来真正创建线程的
 
   

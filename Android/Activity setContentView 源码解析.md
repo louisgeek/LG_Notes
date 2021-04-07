@@ -1,7 +1,8 @@
 
 
-
 # Activity#setContentView
+
+- Activity 创建于 ActivityThread#performLaunchActivity 方法
 
 ```java
 public class Activity extends ContextThemeWrapper
@@ -59,13 +60,12 @@ public class Activity extends ContextThemeWrapper
 
 - 实际是交给 PhoneWindow#setContentView 来处理逻辑
 
-- PhoneWindow 是 Window 的唯一具体继承实现类，所以 Window 是 Activity 和 View 关联的桥梁
+- PhoneWindow 是 Window 的唯一具体继承实现类，Window 是 Activity 和 View 交互的桥梁
 
 - PhoneWindow 对象在 Activity 的 attach() 方法中被初始化创建
 
   
 
-  
 
 ## 1 PhoneWindow#setContentView
 
@@ -351,11 +351,11 @@ protected DecorView generateDecor(int featureId) {
 
 
 
-DecorView
+##### DecorView
 
 - 将要显示的具体内容呈现在 PhoneWindow 上
 - 继承自 FrameLayout，就是对 FrameLayout 进行功能的修饰
-- 作为整个应用窗口(Activity界面)的根 View，是 Android 最基本的窗口系统 
+- 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent，是 Android 最基本的窗口系统
 
 ```java
 public class DecorView extends FrameLayout implements RootViewSurfaceTaker, WindowCallbacks {
@@ -755,3 +755,11 @@ PhoneWindow#setContentView
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/2021032322270172.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xvdWlzZ2Vlaw==,size_16,color_FFFFFF,t_70#pic_center)
 
  mPhoneWindow -> mDectorView -> mContentRoot -> mContentParent ->  Custom LayoutView
+
+
+
+
+
+
+
+# AppCompatActivity#setContentView
