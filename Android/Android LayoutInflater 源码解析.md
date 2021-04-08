@@ -2,14 +2,14 @@
 
 ## LayoutInflater 简介
 
-- android.view.LayoutInflater
-- 布局解析器，把布局文件动态生成 View
+- android.view.LayoutInflater （Inflater 充气者）
+- 布局解析器，把 xml 布局文件解析后动态生成 View
 - 是一个抽象类
-- 是一个系统服务，服务名称是 Context.LAYOUT_INFLATER_SERVICE = "layout_inflater"
+- 是一个系统服务，服务名称 Context.LAYOUT_INFLATER_SERVICE = "layout_inflater"
 
 
 
-## 获取 LayoutInflater 方法
+## 获取 LayoutInflater 实例方法
 
 ### 1 Context#getSystemService
 
@@ -47,30 +47,29 @@ public LayoutInflater getLayoutInflater() {
 
 - PhoneWindow#getLayoutInflater
 
-  ```java
-  private LayoutInflater mLayoutInflater;
-  public PhoneWindow(Context context) {
-          super(context);
-          //就是调用了 LayoutInflater#from
-          mLayoutInflater = LayoutInflater.from(context);
-          mRenderShadowsInCompositor = Settings.Global.getInt(context.getContentResolver(),
-                  DEVELOPMENT_RENDER_SHADOWS_IN_COMPOSITOR, 1) != 0;
-  }
-  @Override
-  public LayoutInflater getLayoutInflater() {
-      //PhoneWindow 初始化时候赋值
-          return mLayoutInflater;
-  }
-  ```
+```java
+private LayoutInflater mLayoutInflater;
+public PhoneWindow(Context context) {
+        super(context);
+        //就是调用了 LayoutInflater#from
+        mLayoutInflater = LayoutInflater.from(context);
+        mRenderShadowsInCompositor = Settings.Global.getInt(context.getContentResolver(),
+                DEVELOPMENT_RENDER_SHADOWS_IN_COMPOSITOR, 1) != 0;
+}
+@Override
+public LayoutInflater getLayoutInflater() {
+    //PhoneWindow 初始化时候赋值
+    return mLayoutInflater;
+}
 ```
-  
-  
 
-## inflate 方法
+
+
+## inflate 解析方法
 
 ### 1 View#inflate
 
-​```java
+```java
 public static View inflate(Context context, @LayoutRes int resource, ViewGroup root) {
         LayoutInflater factory = LayoutInflater.from(context);
         return factory.inflate(resource, root);
@@ -80,9 +79,20 @@ public static View inflate(Context context, @LayoutRes int resource, ViewGroup r
 - 其实就是调用了 LayoutInflater.from(context).inflate(resource, root) 方法
 - 解析布局生成 View 加入 ViewGroup 里面
 
+##### View.inflate 方式的注意事项
+
+- root == null 成立，那么 attachToRoot = false
+- root  != null 成立，那么 attachToRoot = true
+
+所以不适合在列表的 Adapter 里使用，因为它会自己添加 child view ，做不到 root !=null 同时 attachToRoot = false 的情况
+
+所以也不合适在 Fragment#onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)  方法里使用，因为 FragmentManager 里会执行一次 container.addView
+
+
+
 ### 2 LayoutInflater#inflate
 
-- Android 内置了 org.xmlpull 组件，以 pull 方式处理 xml
+- Android 内置了 org.xmlpull 组件，用 pull 方式处理 xml
 
 ```java
 public View inflate(@LayoutRes int resource, @Nullable ViewGroup root) {
@@ -122,34 +132,34 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
             mConstructorArgs[0] = inflaterContext;
             //默认是传入的 root
             View result = root;
-
+    
             try {
                 //移动到开始标签
                 advanceToRootNode(parser);
-                //如 androidx.constraintlayout.widget.ConstraintLayout
+                //比如 androidx.constraintlayout.widget.ConstraintLayout
                 final String name = parser.getName();
-
+    
                 if (DEBUG) {
                     System.out.println("**************************");
                     System.out.println("Creating root view: "
                             + name);
                     System.out.println("**************************");
                 }
-				//根布局是 merge ，意味着必须要有父容器，所以下面判断不满足条件就抛异常
+    			//根布局是 merge ，意味着必须要有父容器，所以下面判断不满足条件就抛异常
                 if (TAG_MERGE.equals(name)) {
                     if (root == null || !attachToRoot) {
                         throw new InflateException("<merge /> can be used only with a valid "
                                 + "ViewGroup root and attachToRoot=true");
                     }
-					//
+    				//
                     rInflate(parser, root, inflaterContext, attrs, false);
                 } else {
                     //创建 xml 的根 View
                     // Temp is the root view that was found in the xml
                     final View temp = createViewFromTag(root, name, inflaterContext, attrs);
-
+    
                     ViewGroup.LayoutParams params = null;
-
+    
                     if (root != null) {
                         if (DEBUG) {
                             System.out.println("Creating params from root: " +
@@ -167,7 +177,7 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
                     if (DEBUG) {
                         System.out.println("-----> start inflating children");
                     }
-					//解析 xml 布局中的子 View
+    				//解析 xml 布局中的子 View
                     // Inflate all children under temp against its context.
                     rInflateChildren(parser, temp, attrs, true);
                     if (DEBUG) {
@@ -198,7 +208,7 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
                 // Don't retain static reference on context.
                 mConstructorArgs[0] = lastContext;
                 mConstructorArgs[1] = null;
-
+    
                 Trace.traceEnd(Trace.TRACE_TAG_VIEW);
             }
             //
@@ -215,7 +225,7 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
 
 
 
-### tryInflatePrecompiled 
+#### tryInflatePrecompiled 
 
 - Android 10 API 29 中新增特征，暂不深究
 - 采用预编译方式减少 xml 解析时间
@@ -230,9 +240,9 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
         }
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "inflate (precompiled)");
         // Try to inflate using a precompiled layout.
-     	//包名，如 com.louisgeek.xxx
+     	//包名，比如 com.louisgeek.xxx
         String pkg = res.getResourcePackageName(resource);
-     	//layout名称，如 activity_main
+     	//layout名称，比如 activity_main
         String layout = res.getResourceEntryName(resource);
 		//通过反射创建对应的 View
         try {
@@ -270,13 +280,13 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
         }
         return null;
     }
+
 ```
 
 - 通过反射来生成对应 View
-
 - mUseCompiledView = true 的情况，现仅供内部测试使用，其他情况默认 false
 
-  ```java
+```java
   protected LayoutInflater(Context context) {
           mContext = context;
       	//无参方法默认 mUseCompiledView = false
@@ -339,23 +349,21 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
               mPrecompiledClassLoader = null;
           }
       }
-  ```
+```
 
   
 
 
 
-### XmlResourceParser
+#### Resources#getLayout
 
-> XmlBlock$Parser 、BridgeXmlBlockParser 实现了 XmlResourceParser 接口
-
-- Resources#getLayout
+- android.content.res.Resources
 
 ```java
- @NonNull
-    public XmlResourceParser getLayout(@LayoutRes int id) throws NotFoundException {
+@NonNull
+public XmlResourceParser getLayout(@LayoutRes int id) throws NotFoundException {
         return loadXmlResourceParser(id, "layout");
-    }
+}
 @NonNull
 XmlResourceParser loadXmlResourceParser(@AnyRes int id, @NonNull String type)
             throws NotFoundException {
@@ -375,24 +383,130 @@ XmlResourceParser loadXmlResourceParser(@AnyRes int id, @NonNull String type)
             releaseTempTypedValue(value);
         }
 }
- @NonNull
+@NonNull
 XmlResourceParser loadXmlResourceParser(String file, int id, int assetCookie,
                                             String type) throws NotFoundException {
         return mResourcesImpl.loadXmlResourceParser(file, id, assetCookie, type);
 }
 ```
 
-- 使用 XmlPullParser 遍历 xml 文件内的所有节点
 
-### AttributeSet
 
-- Xml#asAttributeSet
+##### XmlResourceParser
+
+- android.content.res.XmlResourceParser 
 
 ```java
- public static AttributeSet asAttributeSet(XmlPullParser parser) {
-     //parser is XmlPullParser
-     //parser is XmlResourceParser
+/**
+ * The XML parsing interface returned for an XML resource.  This is a standard
+ * {@link XmlPullParser} interface but also extends {@link AttributeSet} and
+ * adds an additional {@link #close()} method for the client to indicate when
+ * it is done reading the resource.
+ */
+//org.xmlpull.v1.XmlPullParser
+public interface XmlResourceParser extends XmlPullParser, AttributeSet, AutoCloseable {
+    String getAttributeNamespace (int index);
+
+    /**
+     * Close this parser. Calls on the interface are no longer valid after this call.
+     */
+    public void close();
+}
+```
+
+
+
+##### ResourcesImpl#loadXmlResourceParser
+
+```java
+/** Size of the cyclical cache used to map XML files to blocks. */
+private static final int XML_BLOCK_CACHE_SIZE = 4;
+
+// Cyclical cache used for recently-accessed XML files.
+private int mLastCachedXmlBlockIndex = -1;
+private final int[] mCachedXmlBlockCookies = new int[XML_BLOCK_CACHE_SIZE];
+private final String[] mCachedXmlBlockFiles = new String[XML_BLOCK_CACHE_SIZE];
+private final XmlBlock[] mCachedXmlBlocks = new XmlBlock[XML_BLOCK_CACHE_SIZE];
+
+final AssetManager mAssets;
+/**
+     * Loads an XML parser for the specified file.
+     *
+     * @param file the path for the XML file to parse
+     * @param id the resource identifier for the file
+     * @param assetCookie the asset cookie for the file
+     * @param type the type of resource (used for logging)
+     * @return a parser for the specified XML file
+     * @throws NotFoundException if the file could not be loaded
+     */
+    @NonNull
+    XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, int assetCookie,
+            @NonNull String type)
+            throws NotFoundException {
+        if (id != 0) {
+            try {
+                synchronized (mCachedXmlBlocks) {
+                    final int[] cachedXmlBlockCookies = mCachedXmlBlockCookies;
+                    final String[] cachedXmlBlockFiles = mCachedXmlBlockFiles;
+                    final XmlBlock[] cachedXmlBlocks = mCachedXmlBlocks;
+                    // First see if this block is in our cache.
+                    //先查找缓存
+                    final int num = cachedXmlBlockFiles.length;
+                    for (int i = 0; i < num; i++) {
+                        if (cachedXmlBlockCookies[i] == assetCookie && cachedXmlBlockFiles[i] != null
+                                && cachedXmlBlockFiles[i].equals(file)) {
+                            return cachedXmlBlocks[i].newParser(id);
+                        }
+                    }
+
+                    // Not in the cache, create a new block and put it at
+                    // the next slot in the cache.
+                    //无缓存情况下
+                    final XmlBlock block = mAssets.openXmlBlockAsset(assetCookie, file);
+                    if (block != null) {
+                        final int pos = (mLastCachedXmlBlockIndex + 1) % num;
+                        mLastCachedXmlBlockIndex = pos;
+                        final XmlBlock oldBlock = cachedXmlBlocks[pos];
+                        if (oldBlock != null) {
+                            oldBlock.close();
+                        }
+                        cachedXmlBlockCookies[pos] = assetCookie;
+                        cachedXmlBlockFiles[pos] = file;
+                        cachedXmlBlocks[pos] = block;
+                        //实例化 XmlBlock$Parser 进行返回
+                        return block.newParser(id);
+                    }
+                }
+            } catch (Exception e) {
+                final NotFoundException rnf = new NotFoundException("File " + file
+                        + " from xml type " + type + " resource ID #0x" + Integer.toHexString(id));
+                rnf.initCause(e);
+                throw rnf;
+            }
+        }
+
+        throw new NotFoundException("File " + file + " from xml type " + type + " resource ID #0x"
+                + Integer.toHexString(id));
+    }
+```
+
+- 实际返回了一个 XmlBlock$Parser
+
+- XmlBlock$Parser 实现了 XmlResourceParser 接口
+
+  
+
+#### Xml#asAttributeSet
+
+- android.util.Xml
+
+- android.util.AttributeSet
+
+```java
+//上文传入的是 XmlResourceParser 类型 
+public static AttributeSet asAttributeSet(XmlPullParser parser) {
      //XmlBlock$Parser implements XmlResourceParser
+     //XmlResourceParser extends XmlPullParser, AttributeSet
         return (parser instanceof AttributeSet)
                 ? (AttributeSet) parser
                 : new XmlPullAttributes(parser);
@@ -401,7 +515,7 @@ XmlResourceParser loadXmlResourceParser(String file, int id, int assetCookie,
 
 
 
-### advanceToRootNode
+#### advanceToRootNode
 
 - 通过 parser.next() 移动
 
@@ -426,7 +540,7 @@ XmlResourceParser loadXmlResourceParser(String file, int id, int assetCookie,
 
 
 
-### rInflate
+#### rInflate
 
 - XmlPullParser.START_DOCUMENT 文档开始标记，代表未读取任何内容
 
@@ -454,7 +568,7 @@ void rInflate(XmlPullParser parser, View parent, Context context,
             if (type != XmlPullParser.START_TAG) {
                 continue;
             }
-			//如 TextView
+			//比如 TextView
             final String name = parser.getName();
 			
             if (TAG_REQUEST_FOCUS.equals(name)) {
@@ -496,7 +610,7 @@ void rInflate(XmlPullParser parser, View parent, Context context,
 
 - rInflate 调用了 rInflateChildren
 
-### createViewFromTag
+#### createViewFromTag
 
 ```java
 private View createViewFromTag(View parent, String name, Context context, AttributeSet attrs) {
@@ -558,161 +672,167 @@ View createViewFromTag(View parent, String name, Context context, AttributeSet a
     }
 ```
 
-- LayoutInflater#tryCreateView
+##### LayoutInflater#tryCreateView
 
-  ```java
-   @Nullable
-      public final View tryCreateView(@Nullable View parent, @NonNull String name,
-          @NonNull Context context,
-          @NonNull AttributeSet attrs) {
-          if (name.equals(TAG_1995)) {
-              // Let's party like it's 1995!
-              return new BlinkLayout(context, attrs);
-          }
-          View view;
-          if (mFactory2 != null) {
-              view = mFactory2.onCreateView(parent, name, context, attrs);
-          } else if (mFactory != null) {
-              view = mFactory.onCreateView(name, context, attrs);
-          } else {
-              view = null;
-          }
-          if (view == null && mPrivateFactory != null) {
-              view = mPrivateFactory.onCreateView(parent, name, context, attrs);
-          }
-          return view;
-   }
-  ```
+```java
+ @Nullable
+    public final View tryCreateView(@Nullable View parent, @NonNull String name,
+        @NonNull Context context,
+        @NonNull AttributeSet attrs) {
+        if (name.equals(TAG_1995)) {
+            // Let's party like it's 1995!
+            return new BlinkLayout(context, attrs);
+        }
+        View view;
+        if (mFactory2 != null) {
+            view = mFactory2.onCreateView(parent, name, context, attrs);
+        } else if (mFactory != null) {
+            view = mFactory.onCreateView(name, context, attrs);
+        } else {
+            view = null;
+        }
+        if (view == null && mPrivateFactory != null) {
+            view = mPrivateFactory.onCreateView(parent, name, context, attrs);
+        }
+        return view;
+ }
+```
 
-- LayoutInflater#onCreateView
+- 涉及换肤知识点
 
-  ```java
-  @Nullable
-      public View onCreateView(@NonNull Context viewContext, @Nullable View parent,
-              @NonNull String name, @Nullable AttributeSet attrs)
-              throws ClassNotFoundException {
-          return onCreateView(parent, name, attrs);
-  }
-   protected View onCreateView(View parent, String name, AttributeSet attrs)
-              throws ClassNotFoundException {
-          return onCreateView(name, attrs);
-  }
-   protected View onCreateView(String name, AttributeSet attrs)
-              throws ClassNotFoundException {
-          return createView(name, "android.view.", attrs);
-  }
-  ```
+##### LayoutInflater#onCreateView
 
-- LayoutInflater#createView
+```java
+@Nullable
+    public View onCreateView(@NonNull Context viewContext, @Nullable View parent,
+            @NonNull String name, @Nullable AttributeSet attrs)
+            throws ClassNotFoundException {
+        return onCreateView(parent, name, attrs);
+}
+ protected View onCreateView(View parent, String name, AttributeSet attrs)
+            throws ClassNotFoundException {
+        return onCreateView(name, attrs);
+}
+ protected View onCreateView(String name, AttributeSet attrs)
+            throws ClassNotFoundException {
+        return createView(name, "android.view.", attrs);
+}
+```
 
-  ```java
-  public final View createView(String name, String prefix, AttributeSet attrs)
-              throws ClassNotFoundException, InflateException {
-          Context context = (Context) mConstructorArgs[0];
-          if (context == null) {
-              context = mContext;
-          }
-          return createView(context, name, prefix, attrs);
-  }
-  @Nullable
-      public final View createView(@NonNull Context viewContext, @NonNull String name,
-              @Nullable String prefix, @Nullable AttributeSet attrs)
-              throws ClassNotFoundException, InflateException {
-          Objects.requireNonNull(viewContext);
-          Objects.requireNonNull(name);
-          Constructor<? extends View> constructor = sConstructorMap.get(name);
-          if (constructor != null && !verifyClassLoader(constructor)) {
-              constructor = null;
-              sConstructorMap.remove(name);
-          }
-          Class<? extends View> clazz = null;
-  
-          try {
-              Trace.traceBegin(Trace.TRACE_TAG_VIEW, name);
-  
-              if (constructor == null) {
-                  // Class not found in the cache, see if it's real, and try to add it
-                  clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
-                          mContext.getClassLoader()).asSubclass(View.class);
-  
-                  if (mFilter != null && clazz != null) {
-                      boolean allowed = mFilter.onLoadClass(clazz);
-                      if (!allowed) {
-                          failNotAllowed(name, prefix, viewContext, attrs);
-                      }
-                  }
-                  constructor = clazz.getConstructor(mConstructorSignature);
-                  constructor.setAccessible(true);
-                  sConstructorMap.put(name, constructor);
-              } else {
-                  // If we have a filter, apply it to cached constructor
-                  if (mFilter != null) {
-                      // Have we seen this name before?
-                      Boolean allowedState = mFilterMap.get(name);
-                      if (allowedState == null) {
-                          // New class -- remember whether it is allowed
-                          clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
-                                  mContext.getClassLoader()).asSubclass(View.class);
-  
-                          boolean allowed = clazz != null && mFilter.onLoadClass(clazz);
-                          mFilterMap.put(name, allowed);
-                          if (!allowed) {
-                              failNotAllowed(name, prefix, viewContext, attrs);
-                          }
-                      } else if (allowedState.equals(Boolean.FALSE)) {
-                          failNotAllowed(name, prefix, viewContext, attrs);
-                      }
-                  }
-              }
-  
-              Object lastContext = mConstructorArgs[0];
-              mConstructorArgs[0] = viewContext;
-              Object[] args = mConstructorArgs;
-              args[1] = attrs;
-  
-              try {
-                  final View view = constructor.newInstance(args);
-                  if (view instanceof ViewStub) {
-                      // Use the same context when inflating ViewStub later.
-                      final ViewStub viewStub = (ViewStub) view;
-                      viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
-                  }
-                  return view;
-              } finally {
-                  mConstructorArgs[0] = lastContext;
-              }
-          } catch (NoSuchMethodException e) {
-              final InflateException ie = new InflateException(
-                      getParserStateDescription(viewContext, attrs)
-                      + ": Error inflating class " + (prefix != null ? (prefix + name) : name), e);
-              ie.setStackTrace(EMPTY_STACK_TRACE);
-              throw ie;
-  
-          } catch (ClassCastException e) {
-              // If loaded class is not a View subclass
-              final InflateException ie = new InflateException(
-                      getParserStateDescription(viewContext, attrs)
-                      + ": Class is not a View " + (prefix != null ? (prefix + name) : name), e);
-              ie.setStackTrace(EMPTY_STACK_TRACE);
-              throw ie;
-          } catch (ClassNotFoundException e) {
-              // If loadClass fails, we should propagate the exception.
-              throw e;
-          } catch (Exception e) {
-              final InflateException ie = new InflateException(
-                      getParserStateDescription(viewContext, attrs) + ": Error inflating class "
-                              + (clazz == null ? "<unknown>" : clazz.getName()), e);
-              ie.setStackTrace(EMPTY_STACK_TRACE);
-              throw ie;
-          } finally {
-              Trace.traceEnd(Trace.TRACE_TAG_VIEW);
-          }
-  }
-  ```
+##### LayoutInflater#createView
+
+```java
+public final View createView(String name, String prefix, AttributeSet attrs)
+            throws ClassNotFoundException, InflateException {
+        Context context = (Context) mConstructorArgs[0];
+        if (context == null) {
+            context = mContext;
+        }
+        return createView(context, name, prefix, attrs);
+}
+@Nullable
+    public final View createView(@NonNull Context viewContext, @NonNull String name,
+            @Nullable String prefix, @Nullable AttributeSet attrs)
+            throws ClassNotFoundException, InflateException {
+        Objects.requireNonNull(viewContext);
+        Objects.requireNonNull(name);
+        Constructor<? extends View> constructor = sConstructorMap.get(name);
+        if (constructor != null && !verifyClassLoader(constructor)) {
+            constructor = null;
+            sConstructorMap.remove(name);
+        }
+        Class<? extends View> clazz = null;
+
+        try {
+            Trace.traceBegin(Trace.TRACE_TAG_VIEW, name);
+
+            if (constructor == null) {
+                // Class not found in the cache, see if it's real, and try to add it
+                clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
+                        mContext.getClassLoader()).asSubclass(View.class);
+
+                if (mFilter != null && clazz != null) {
+                    boolean allowed = mFilter.onLoadClass(clazz);
+                    if (!allowed) {
+                        failNotAllowed(name, prefix, viewContext, attrs);
+                    }
+                }
+                constructor = clazz.getConstructor(mConstructorSignature);
+                constructor.setAccessible(true);
+                sConstructorMap.put(name, constructor);
+            } else {
+                // If we have a filter, apply it to cached constructor
+                if (mFilter != null) {
+                    // Have we seen this name before?
+                    Boolean allowedState = mFilterMap.get(name);
+                    if (allowedState == null) {
+                        // New class -- remember whether it is allowed
+                        clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
+                                mContext.getClassLoader()).asSubclass(View.class);
+
+                        boolean allowed = clazz != null && mFilter.onLoadClass(clazz);
+                        mFilterMap.put(name, allowed);
+                        if (!allowed) {
+                            failNotAllowed(name, prefix, viewContext, attrs);
+                        }
+                    } else if (allowedState.equals(Boolean.FALSE)) {
+                        failNotAllowed(name, prefix, viewContext, attrs);
+                    }
+                }
+            }
+
+            Object lastContext = mConstructorArgs[0];
+            mConstructorArgs[0] = viewContext;
+            Object[] args = mConstructorArgs;
+            args[1] = attrs;
+
+            try {
+                final View view = constructor.newInstance(args);
+                if (view instanceof ViewStub) {
+                    // Use the same context when inflating ViewStub later.
+                    final ViewStub viewStub = (ViewStub) view;
+                    viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
+                }
+                return view;
+            } finally {
+                mConstructorArgs[0] = lastContext;
+            }
+        } catch (NoSuchMethodException e) {
+            final InflateException ie = new InflateException(
+                    getParserStateDescription(viewContext, attrs)
+                    + ": Error inflating class " + (prefix != null ? (prefix + name) : name), e);
+            ie.setStackTrace(EMPTY_STACK_TRACE);
+            throw ie;
+
+        } catch (ClassCastException e) {
+            // If loaded class is not a View subclass
+            final InflateException ie = new InflateException(
+                    getParserStateDescription(viewContext, attrs)
+                    + ": Class is not a View " + (prefix != null ? (prefix + name) : name), e);
+            ie.setStackTrace(EMPTY_STACK_TRACE);
+            throw ie;
+        } catch (ClassNotFoundException e) {
+            // If loadClass fails, we should propagate the exception.
+            throw e;
+        } catch (Exception e) {
+            final InflateException ie = new InflateException(
+                    getParserStateDescription(viewContext, attrs) + ": Error inflating class "
+                            + (clazz == null ? "<unknown>" : clazz.getName()), e);
+            ie.setStackTrace(EMPTY_STACK_TRACE);
+            throw ie;
+        } finally {
+            Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+        }
+}
+```
+
+- 反射 Class#forName
+
+- ClassLoader
 
   
 
-### rInflateChildren
+#### rInflateChildren
 
 ```java
  final void rInflateChildren(XmlPullParser parser, View parent, AttributeSet attrs,
@@ -723,14 +843,9 @@ View createViewFromTag(View parent, String name, Context context, AttributeSet a
 
 - rInflateChildren 内部也调用了  rInflate 方法，所以就形成了递归调用
 
-## View.inflate 注意事项
 
-- root == null 成立，那么 attachToRoot = false
-- root  != null 成立，那么 attachToRoot = true
 
-所以不适合在列表的 Adapter 里使用，因为它会自己添加 child view ，做不到 root !=null 同时 attachToRoot = false 的情况
 
-所以也不合适在 Fragment#onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState)  方法里使用，因为 FragmentManager 里会进行执行一次 container.addView
 
 
 
@@ -899,13 +1014,33 @@ final View createView(View parent, final String name, @NonNull Context context,
 
 
 
+
+
 ## 总结
 
-LayoutInflater 系统的一个服务，作用是能够把布局文件动态生成 View
+LayoutInflater 布局解析器是一个系统服务，作用是解析布局文件后动态生成 View
 
-Activity#setContentView 方法内部就用到了 LayoutInflater 进行布局解析
+三种获取实例的方法最终都是通过 Context#getSystemService 方法实现的，里面涉及到单例模式
 
-内部采用 pull 解析器进行 xml 解析
+Activity#setContentView 方法内部也用到了 LayoutInflater 进行布局解析
+
+LayoutInflater 内部采用了 org.xmlpull 解析器实现 xml 解析
+
+
+
+
+
+- LayoutInflater 布局解析器进行 inflate 解析的流程是怎么样的？
+
+1 LayoutInflater 有四个方法重载，其中两个针对 xml 布局文件，另外两个是针对现成的 XmlResourceParser
+
+2 如果是 xml 布局文件，可以通过 Resources#getLayout 把 xml 布局文件解析加载得到 XmlResourceParser
+
+3 因为 XmlResourceParser 包含属性信息，所以利用 Xml#asAttributeSet 将其转化成 AttributeSet 供后续使用
+
+4 通过 advanceToRootNode 方法找到根标签，如遇到的不是 <merge/> 标签就通过 createViewFromTag 方法把根标签对应类通过反射的方式创建出来，然后调用 rInflateChildren 方法，而它就是调用了 rInflate 方法，从而实现了递归，而 rInflate 内部也调用了 createViewFromTag ，所以用递归调用的方式把子 View 一个个创建出来并通过 addView 加入其父 View 中，如遇到 <merge/> 标签就直接调用 rInflate 先进行处理一次，最终形成一个视图树
+
+5 整个流程中还涉及到反射、ClassLoader、换肤等知识点可以展开
 
 
 
