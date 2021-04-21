@@ -30,10 +30,9 @@ Primitive Data Type  基本(原生)数据类型
 - bit 位是最小的信息单位
 - char  ASCII
 
-### literal 字面常值(字面值、字面量、直接量、源文本)
+### 字面值
 
-> A letter or symbol that stands for itself as opposed to a feature, function, or entity associated with it in a programming language.
-> 一种字母或符号，代表其本身，而不是与之相关联的编程语言中的特性、函数或实体。
+> literal 字面常值(字面值、字面量、直接量、源文本)
 
 - 整数字面值默认是 int
 如果要表示 long ，则需要加 l 或者 L 
