@@ -74,3 +74,22 @@ simpleName：InnerClass
 canonicalName：com.louisgeek.OuterClass.InnerClass
 ```
 
+
+
+
+
+## 动态代理
+
+- 在运行期间动态创建接口对象的方式，而不需要编写起实现类
+- 其实就是 JVM 在运行期间动态创建了实现类的 class 字节码并加载使用
+
+
+
+
+
+
+
+- 获取构造器实例化对象与属性信息
+- 包信息和方法
+- Hook技术动态编程
+- 

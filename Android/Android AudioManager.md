@@ -1,4 +1,4 @@
-
+> 源码基于 Android 11 API 30
 
 
 
@@ -17,6 +17,7 @@ AudioManager.STREAM_ALARM 4 闹钟
 AudioManager.STREAM_NOTIFICATION 5 通知
 AudioManager.STREAM_DTMF 8 双音多频
 AudioManager.STREAM_ACCESSIBILITY 10
+
 //e.g.
 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, now, AudioManager.FX_KEY_CLICK);
 ```
@@ -31,6 +32,7 @@ AudioManager.FLAG_PLAY_SOUND
 AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE
 AudioManager.FLAG_SHOW_UI
 AudioManager.FLAG_VIBRATE
+
 //e.g.
 audioManager.setStreamVolume(streamType, index, AudioManager.FLAG_SHOW_UI);
 ```
@@ -40,20 +42,21 @@ audioManager.setStreamVolume(streamType, index, AudioManager.FLAG_SHOW_UI);
 AudioManager.MODE
 
 ```
-AudioManager.MODE_CALL_SCREENING 4 呼叫进行中
+AudioManager.MODE_CALL_SCREENING 4 呼叫筛选中（呼叫过滤）
 AudioManager.MODE_CURRENT -1
 AudioManager.MODE_INVALID -2
 AudioManager.MODE_IN_CALL 2 
 AudioManager.MODE_IN_COMMUNICATION 3
 AudioManager.MODE_NORMAL 0 普通（不响铃，不呼叫）
 AudioManager.MODE_RINGTONE 1 铃声
+
 //e.g.
 audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
 ```
 
 
 
-AudioService
+AudioService 里系统定义的默认音量
 
 ```java
 /** Maximum volume index values for audio streams */

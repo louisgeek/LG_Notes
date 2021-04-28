@@ -1,4 +1,4 @@
-
+> 源码基于 Android 11 API 30
 
 # Activity#setContentView
 
@@ -762,4 +762,420 @@ PhoneWindow#setContentView
 
 
 
+
+
+> 源码基于 androidx.appcompat:appcompat:1.2.0
+
 # AppCompatActivity#setContentView
+
+- 实现setFactory把TextView转为AppCompatTextView，ImageView转AppCompatImageView等
+
+```java
+    @Override
+    public void setContentView(@LayoutRes int layoutResID) {
+        getDelegate().setContentView(layoutResID);
+    }
+
+    @Override
+    public void setContentView(View view) {
+        getDelegate().setContentView(view);
+    }
+
+    @Override
+    public void setContentView(View view, ViewGroup.LayoutParams params) {
+        getDelegate().setContentView(view, params);
+    }
+   /**
+     * @return The {@link AppCompatDelegate} being used by this Activity.
+     */
+    @NonNull
+    public AppCompatDelegate getDelegate() {
+        if (mDelegate == null) {
+            mDelegate = AppCompatDelegate.create(this, this);
+        }
+        return mDelegate;
+    }
+```
+
+AppCompatDelegate#create
+
+```java
+  /**
+     * Create an {@link androidx.appcompat.app.AppCompatDelegate} to use with {@code activity}.
+     *
+     * @param callback An optional callback for AppCompat specific events
+     */
+    @NonNull
+    public static AppCompatDelegate create(@NonNull Activity activity,
+            @Nullable AppCompatCallback callback) {
+        return new AppCompatDelegateImpl(activity, callback);
+    }
+
+
+    AppCompatDelegateImpl(Activity activity, AppCompatCallback callback) {
+        this(activity, null, callback, activity);
+    }
+
+    AppCompatDelegateImpl(Dialog dialog, AppCompatCallback callback) {
+        this(dialog.getContext(), dialog.getWindow(), callback, dialog);
+    }
+
+    AppCompatDelegateImpl(Context context, Window window, AppCompatCallback callback) {
+        this(context, window, callback, context);
+    }
+
+    AppCompatDelegateImpl(Context context, Activity activity, AppCompatCallback callback) {
+        this(context, null, callback, activity);
+    }
+
+    private AppCompatDelegateImpl(Context context, Window window, AppCompatCallback callback,
+            Object host) {
+        mContext = context;
+        mAppCompatCallback = callback;
+        mHost = host;
+
+        if (mLocalNightMode == MODE_NIGHT_UNSPECIFIED && mHost instanceof Dialog) {
+            final AppCompatActivity activity = tryUnwrapContext();
+            if (activity != null) {
+                // This code path is used to detect when this Delegate is a child Delegate from
+                // an Activity, primarily for Dialogs. Dialogs use the Activity as it's Context,
+                // so we want to make sure that the this 'child' delegate does not interfere
+                // with the Activity config. The simplest way to do that is to match the
+                // outer Activity's local night mode
+                mLocalNightMode = activity.getDelegate().getLocalNightMode();
+            }
+        }
+        if (mLocalNightMode == MODE_NIGHT_UNSPECIFIED) {
+            // Try and read the current night mode from our static store
+            final Integer value = sLocalNightModes.get(mHost.getClass().getName());
+            if (value != null) {
+                mLocalNightMode = value;
+                // Finally remove the value
+                sLocalNightModes.remove(mHost.getClass().getName());
+            }
+        }
+
+        if (window != null) {
+            attachToWindow(window);
+        }
+
+        // Preload appcompat-specific handling of drawables that should be handled in a special
+        // way (for tinting etc). After the following line completes, calls from AppCompatResources
+        // to ResourceManagerInternal (in appcompat-resources) will handle those internal drawable
+        // paths correctly without having to go through AppCompatDrawableManager APIs.
+        AppCompatDrawableManager.preload();
+    }
+
+```
+
+AppCompatDelegateImpl#attachToWindow
+
+```java
+    private void attachToWindow(@NonNull Window window) {
+        if (mWindow != null) {
+            throw new IllegalStateException(
+                    "AppCompat has already installed itself into the Window");
+        }
+
+        final Window.Callback callback = window.getCallback();
+        if (callback instanceof AppCompatWindowCallback) {
+            throw new IllegalStateException(
+                    "AppCompat has already installed itself into the Window");
+        }
+        mAppCompatWindowCallback = new AppCompatWindowCallback(callback);
+        // Now install the new callback
+        window.setCallback(mAppCompatWindowCallback);
+
+        final TintTypedArray a = TintTypedArray.obtainStyledAttributes(
+                mContext, null, sWindowBackgroundStyleable);
+        final Drawable winBg = a.getDrawableIfKnown(0);
+        if (winBg != null) {
+            // Now set the background drawable
+            window.setBackgroundDrawable(winBg);
+        }
+        a.recycle();
+
+        mWindow = window;
+    }
+```
+
+
+
+## 1 AppCompatDelegateImpl#setContentView
+
+```java
+    @Override
+    public void setContentView(int resId) {
+        ensureSubDecor();
+        ViewGroup contentParent = mSubDecor.findViewById(android.R.id.content);
+        contentParent.removeAllViews();
+        LayoutInflater.from(mContext).inflate(resId, contentParent);
+        mAppCompatWindowCallback.getWrapped().onContentChanged();
+    }
+
+   @Override
+    public void setContentView(View v) {
+        ensureSubDecor();
+        ViewGroup contentParent = mSubDecor.findViewById(android.R.id.content);
+        contentParent.removeAllViews();
+        contentParent.addView(v);
+        mAppCompatWindowCallback.getWrapped().onContentChanged();
+    }
+    
+    @Override
+    public void setContentView(View v, ViewGroup.LayoutParams lp) {
+        ensureSubDecor();
+        ViewGroup contentParent = mSubDecor.findViewById(android.R.id.content);
+        contentParent.removeAllViews();
+        contentParent.addView(v, lp);
+        mAppCompatWindowCallback.getWrapped().onContentChanged();
+    }
+```
+
+
+
+### 1.1 AppCompatDelegateImpl#ensureSubDecor
+
+```java
+private void ensureSubDecor() {
+        if (!mSubDecorInstalled) {
+            mSubDecor = createSubDecor();
+
+            // If a title was set before we installed the decor, propagate it now
+            CharSequence title = getTitle();
+            if (!TextUtils.isEmpty(title)) {
+                if (mDecorContentParent != null) {
+                    mDecorContentParent.setWindowTitle(title);
+                } else if (peekSupportActionBar() != null) {
+                    peekSupportActionBar().setWindowTitle(title);
+                } else if (mTitleView != null) {
+                    mTitleView.setText(title);
+                }
+            }
+
+            applyFixedSizeWindow();
+
+            onSubDecorInstalled(mSubDecor);
+
+            mSubDecorInstalled = true;
+
+            // Invalidate if the panel menu hasn't been created before this.
+            // Panel menu invalidation is deferred avoiding application onCreateOptionsMenu
+            // being called in the middle of onCreate or similar.
+            // A pending invalidation will typically be resolved before the posted message
+            // would run normally in order to satisfy instance state restoration.
+            PanelFeatureState st = getPanelState(FEATURE_OPTIONS_PANEL, false);
+            if (!mIsDestroyed && (st == null || st.menu == null)) {
+                invalidatePanelMenu(FEATURE_SUPPORT_ACTION_BAR);
+            }
+        }
+    }
+```
+
+
+
+#### 1.1.1 AppCompatDelegateImpl#createSubDecor
+
+```java
+private ViewGroup createSubDecor() {
+        TypedArray a = mContext.obtainStyledAttributes(R.styleable.AppCompatTheme);
+
+        if (!a.hasValue(R.styleable.AppCompatTheme_windowActionBar)) {
+            a.recycle();
+            throw new IllegalStateException(
+                    "You need to use a Theme.AppCompat theme (or descendant) with this activity.");
+        }
+
+        if (a.getBoolean(R.styleable.AppCompatTheme_windowNoTitle, false)) {
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+        } else if (a.getBoolean(R.styleable.AppCompatTheme_windowActionBar, false)) {
+            // Don't allow an action bar if there is no title.
+            requestWindowFeature(FEATURE_SUPPORT_ACTION_BAR);
+        }
+        if (a.getBoolean(R.styleable.AppCompatTheme_windowActionBarOverlay, false)) {
+            requestWindowFeature(FEATURE_SUPPORT_ACTION_BAR_OVERLAY);
+        }
+        if (a.getBoolean(R.styleable.AppCompatTheme_windowActionModeOverlay, false)) {
+            requestWindowFeature(FEATURE_ACTION_MODE_OVERLAY);
+        }
+        mIsFloating = a.getBoolean(R.styleable.AppCompatTheme_android_windowIsFloating, false);
+        a.recycle();
+
+        // Now let's make sure that the Window has installed its decor by retrieving it
+        ensureWindow();
+        mWindow.getDecorView();
+
+        final LayoutInflater inflater = LayoutInflater.from(mContext);
+        ViewGroup subDecor = null;
+
+
+        if (!mWindowNoTitle) {
+            if (mIsFloating) {
+                // If we're floating, inflate the dialog title decor
+                subDecor = (ViewGroup) inflater.inflate(
+                        R.layout.abc_dialog_title_material, null);
+
+                // Floating windows can never have an action bar, reset the flags
+                mHasActionBar = mOverlayActionBar = false;
+            } else if (mHasActionBar) {
+                /**
+                 * This needs some explanation. As we can not use the android:theme attribute
+                 * pre-L, we emulate it by manually creating a LayoutInflater using a
+                 * ContextThemeWrapper pointing to actionBarTheme.
+                 */
+                TypedValue outValue = new TypedValue();
+                mContext.getTheme().resolveAttribute(R.attr.actionBarTheme, outValue, true);
+
+                Context themedContext;
+                if (outValue.resourceId != 0) {
+                    themedContext = new ContextThemeWrapper(mContext, outValue.resourceId);
+                } else {
+                    themedContext = mContext;
+                }
+
+                // Now inflate the view using the themed context and set it as the content view
+                subDecor = (ViewGroup) LayoutInflater.from(themedContext)
+                        .inflate(R.layout.abc_screen_toolbar, null);
+
+                mDecorContentParent = (DecorContentParent) subDecor
+                        .findViewById(R.id.decor_content_parent);
+                mDecorContentParent.setWindowCallback(getWindowCallback());
+
+                /**
+                 * Propagate features to DecorContentParent
+                 */
+                if (mOverlayActionBar) {
+                    mDecorContentParent.initFeature(FEATURE_SUPPORT_ACTION_BAR_OVERLAY);
+                }
+                if (mFeatureProgress) {
+                    mDecorContentParent.initFeature(Window.FEATURE_PROGRESS);
+                }
+                if (mFeatureIndeterminateProgress) {
+                    mDecorContentParent.initFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+                }
+            }
+        } else {
+            if (mOverlayActionMode) {
+                subDecor = (ViewGroup) inflater.inflate(
+                        R.layout.abc_screen_simple_overlay_action_mode, null);
+            } else {
+                subDecor = (ViewGroup) inflater.inflate(R.layout.abc_screen_simple, null);
+            }
+        }
+
+        if (subDecor == null) {
+            throw new IllegalArgumentException(
+                    "AppCompat does not support the current theme features: { "
+                            + "windowActionBar: " + mHasActionBar
+                            + ", windowActionBarOverlay: "+ mOverlayActionBar
+                            + ", android:windowIsFloating: " + mIsFloating
+                            + ", windowActionModeOverlay: " + mOverlayActionMode
+                            + ", windowNoTitle: " + mWindowNoTitle
+                            + " }");
+        }
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            // If we're running on L or above, we can rely on ViewCompat's
+            // setOnApplyWindowInsetsListener
+            ViewCompat.setOnApplyWindowInsetsListener(subDecor, new OnApplyWindowInsetsListener() {
+                        @Override
+                        public WindowInsetsCompat onApplyWindowInsets(View v,
+                                WindowInsetsCompat insets) {
+                            final int top = insets.getSystemWindowInsetTop();
+                            final int newTop = updateStatusGuard(insets, null);
+
+                            if (top != newTop) {
+                                insets = insets.replaceSystemWindowInsets(
+                                        insets.getSystemWindowInsetLeft(),
+                                        newTop,
+                                        insets.getSystemWindowInsetRight(),
+                                        insets.getSystemWindowInsetBottom());
+                            }
+
+                            // Now apply the insets on our view
+                            return ViewCompat.onApplyWindowInsets(v, insets);
+                        }
+                    });
+        } else if (subDecor instanceof FitWindowsViewGroup) {
+            // Else, we need to use our own FitWindowsViewGroup handling
+            ((FitWindowsViewGroup) subDecor).setOnFitSystemWindowsListener(
+                    new FitWindowsViewGroup.OnFitSystemWindowsListener() {
+                        @Override
+                        public void onFitSystemWindows(Rect insets) {
+                            insets.top = updateStatusGuard(null, insets);
+                        }
+                    });
+        }
+
+        if (mDecorContentParent == null) {
+            mTitleView = (TextView) subDecor.findViewById(R.id.title);
+        }
+
+        // Make the decor optionally fit system windows, like the window's decor
+        ViewUtils.makeOptionalFitsSystemWindows(subDecor);
+
+        final ContentFrameLayout contentView = (ContentFrameLayout) subDecor.findViewById(
+                R.id.action_bar_activity_content);
+
+        final ViewGroup windowContentView = (ViewGroup) mWindow.findViewById(android.R.id.content);
+        if (windowContentView != null) {
+            // There might be Views already added to the Window's content view so we need to
+            // migrate them to our content view
+            while (windowContentView.getChildCount() > 0) {
+                final View child = windowContentView.getChildAt(0);
+                windowContentView.removeViewAt(0);
+                contentView.addView(child);
+            }
+
+            // Change our content FrameLayout to use the android.R.id.content id.
+            // Useful for fragments.
+            windowContentView.setId(View.NO_ID);
+            contentView.setId(android.R.id.content);
+
+            // The decorContent may have a foreground drawable set (windowContentOverlay).
+            // Remove this as we handle it ourselves
+            if (windowContentView instanceof FrameLayout) {
+                ((FrameLayout) windowContentView).setForeground(null);
+            }
+        }
+
+        // Now set the Window's content view with the decor
+        mWindow.setContentView(subDecor);
+
+        contentView.setAttachListener(new ContentFrameLayout.OnAttachListener() {
+            @Override
+            public void onAttachedFromWindow() {}
+
+            @Override
+            public void onDetachedFromWindow() {
+                dismissPopups();
+            }
+        });
+
+        return subDecor;
+    }
+```
+
+
+
+
+
+## 总结
+
+通过XML的Pull解析方式获取View的标签（这个在主线程是耗时的）
+
+通过标签以反射的方式来创建View对象（反射是比new对象是耗性能的）
+
+如果是ViewGroup的话则会对子View遍历并重复以上步骤，然后add到父View中
+
+
+
+
+
+
+
+
+
+
+
+动态换肤离不开LayoutInflater与Factory（Factory2）

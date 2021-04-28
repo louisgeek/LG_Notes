@@ -1,488 +1,362 @@
+## RecyclerView 常规使用
 
-
-
-
-> 源码基于 androidx.recyclerview:recyclerview:1.2.0
-
-
-
-
-
-自带 ViewHolder
-
-局部刷新
-
-自带 item 动画效果
-
-
-
-侧重点不同，为啥没有进标准版里
-
-
-
-
-
-
-
-
-
-RecyclerView$ViewHolder
-
-
-
-RecyclerView$Adapter
-
-
-
-RecyclerView$Recycler
-
-
-
-## RecyclerView#onMeasure
+### DataItem.java
 
 ```java
-  @Override
-    protected void onMeasure(int widthSpec, int heightSpec) {
-        if (mLayout == null) {
-            defaultOnMeasure(widthSpec, heightSpec);
-            return;
-        }
-        if (mLayout.isAutoMeasureEnabled()) {
-            final int widthMode = MeasureSpec.getMode(widthSpec);
-            final int heightMode = MeasureSpec.getMode(heightSpec);
+public class DataItem {
+    public String id;
+    public String title;
+    public String subtitle;
+    public String content;
+    public int imageResId;
+}
 
-            /**
-             * This specific call should be considered deprecated and replaced with
-             * {@link #defaultOnMeasure(int, int)}. It can't actually be replaced as it could
-             * break existing third party code but all documentation directs developers to not
-             * override {@link LayoutManager#onMeasure(int, int)} when
-             * {@link LayoutManager#isAutoMeasureEnabled()} returns true.
-             */
-            mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
+```
 
-            // Calculate and track whether we should skip measurement here because the MeasureSpec
-            // modes in both dimensions are EXACTLY.
-            mLastAutoMeasureSkippedDueToExact =
-                    widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY;
-            if (mLastAutoMeasureSkippedDueToExact || mAdapter == null) {
-                return;
-            }
+- 可选实现 Cloneable 接口，可解决后面遇到对象引用问题
 
-            if (mState.mLayoutStep == State.STEP_START) {
-                dispatchLayoutStep1();
-            }
-            // set dimensions in 2nd step. Pre-layout should happen with old dimensions for
-            // consistency
-            mLayout.setMeasureSpecs(widthSpec, heightSpec);
-            mState.mIsMeasuring = true;
-            dispatchLayoutStep2();
 
-            // now we can get the width and height from the children.
-            mLayout.setMeasuredDimensionFromChildren(widthSpec, heightSpec);
 
-            // if RecyclerView has non-exact width and height and if there is at least one child
-            // which also has non-exact width & height, we have to re-measure.
-            if (mLayout.shouldMeasureTwice()) {
-                mLayout.setMeasureSpecs(
-                        MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
-                mState.mIsMeasuring = true;
-                dispatchLayoutStep2();
-                // now we can get the width and height from the children.
-                mLayout.setMeasuredDimensionFromChildren(widthSpec, heightSpec);
-            }
+### listitem_image_text.xml
 
-            mLastAutoMeasureNonExactMeasuredWidth = getMeasuredWidth();
-            mLastAutoMeasureNonExactMeasuredHeight = getMeasuredHeight();
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+
+    <TextView
+        android:id="@+id/id_tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:padding="10dp"
+        android:singleLine="true"
+        android:textSize="22sp"
+        app:layout_constraintEnd_toStartOf="@id/id_iv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="标题标题标题标题标题标题标题标题标题标题end" />
+
+    <TextView
+        android:id="@+id/id_tv_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:padding="10dp"
+        android:singleLine="true"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toStartOf="@id/id_iv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/id_tv_title"
+        tools:text="副标题副标题副标题副标题副标题副标题副标题副标题副标题副标题副标题end" />
+
+    <TextView
+        android:id="@+id/id_tv_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/id_iv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/id_tv_subtitle"
+        tools:text="内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容end" />
+
+    <!--在 id_tv_title,id_tv_subtitle,id_tv_content 三个控件右侧设置一道屏障-->
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/id_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="right"
+        app:constraint_referenced_ids="id_tv_title,id_tv_subtitle,id_tv_content" />
+
+    <!--id_iv 控件依赖上面这道屏障-->
+    <ImageView
+        android:id="@+id/id_iv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/ic_launcher"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/id_barrier" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+
+
+### DataItemViewHolder.java
+
+```java
+public class DataItemViewHolder extends RecyclerView.ViewHolder {
+    TextView id_tv_title;
+    TextView id_tv_subtitle;
+    TextView id_tv_content;
+    ImageView id_iv;
+
+    public DataItemViewHolder(@NonNull View itemView) {
+        super(itemView);
+        id_tv_title = itemView.findViewById(R.id.id_tv_title);
+        id_tv_subtitle = itemView.findViewById(R.id.id_tv_subtitle);
+        id_tv_content = itemView.findViewById(R.id.id_tv_content);
+        id_iv = itemView.findViewById(R.id.id_iv);
+    }
+
+}
+```
+
+
+
+
+
+### DataItemRVAdapter.java
+
+```java
+public class DataItemRVAdapter extends RecyclerView.Adapter<DataItemViewHolder> {
+    public static final String KEY_TITLE = "KEY_TITLE";
+    public static final String KEY_SUBTITLE = "KEY_SUBTITLE";
+    public static final String KEY_CONTENT = "KEY_CONTENT";
+    public static final String KEY_IMAGE = "KEY_IMAGE";
+
+    private List<DataItem> mDataItemList;
+
+    public void setDataItemList(List<DataItem> dataItemList) {
+        this.mDataItemList = new ArrayList<>(dataItemList);
+        /*this.mDataItemList = new ArrayList<>();
+        this.mDataItemList.addAll(dataItemList);*/
+    }
+
+    public List<DataItem> getDataItemList() {
+        return mDataItemList;
+    }
+
+    @NonNull
+    @Override
+    public DataItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.listitem_image_text, parent, false);
+        return new DataItemViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DataItemViewHolder holder, int position) {
+        DataItem dataItem = mDataItemList.get(position);
+        holder.id_tv_title.setText(dataItem.title);
+        holder.id_tv_subtitle.setText(dataItem.subtitle);
+        holder.id_tv_content.setText(dataItem.content);
+        holder.id_iv.setImageResource(dataItem.imageResId);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DataItemViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            //【列表刷新】 或者 【列表局部 Item 刷新】
+            super.onBindViewHolder(holder, position, payloads);
         } else {
-            //mAutoMeasure is disable
-            if (mHasFixedSize) {
+            //【Item 局部 View 刷新】
+            Object payload = payloads.get(0);
+            if (payload instanceof Map) {
+                //【key-value 键值对】
+                Map<String, String> map = (Map<String, String>) payload;
+                for (Map.Entry<String, String> stringObjectEntry : map.entrySet()) {
+                    String key = stringObjectEntry.getKey();
+                    String value = stringObjectEntry.getValue();
+                    //简单封装
+                    bindViewHolder(holder, position, key, value);
+                }
+            } else if (payload instanceof String) {
+                //【key 标记】
+                String key = (String) payload;
+                //简单封装
+                bindViewHolder(holder, position, key, null);
+            }
+
+        }
+    }
+
+    private void bindViewHolder(DataItemViewHolder holder, int position, String key, String value) {
+        DataItem dataItem = mDataItemList.get(position);
+        if (key.equals(KEY_TITLE)) {
+            holder.id_tv_title.setText(value != null ? value : dataItem.title);
+        } else if (key.equals(KEY_SUBTITLE)) {
+            holder.id_tv_subtitle.setText(value != null ? value : dataItem.content);
+        } else if (key.equals(KEY_CONTENT)) {
+            holder.id_tv_content.setText(value != null ? value : dataItem.content);
+        } else if (key.equals(KEY_IMAGE)) {
+            holder.id_iv.setImageResource(value != null ? Integer.parseInt(value) : dataItem.imageResId);
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        return mDataItemList.size();
+    }
+
+}
+```
+
+### MainActivity.java
+
+```java
+public class MainActivity extends AppCompatActivity {
+    private List<DataItem> mDataItemList;
+    private DataItemRVAdapter mDataItemRVAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Button id_btn = findViewById(R.id.id_btn);
+
+        id_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 //
-                mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
-                return;
+                refreshData();
             }
-            // custom onMeasure
-            if (mAdapterUpdateDuringMeasure) {
-                startInterceptRequestLayout();
-                onEnterLayoutOrScroll();
-                processAdapterUpdatesAndSetAnimationFlags();
-                onExitLayoutOrScroll();
-
-                if (mState.mRunPredictiveAnimations) {
-                    mState.mInPreLayout = true;
-                } else {
-                    // consume remaining updates to provide a consistent state with the layout pass.
-                    mAdapterHelper.consumeUpdatesInOnePass();
-                    mState.mInPreLayout = false;
-                }
-                mAdapterUpdateDuringMeasure = false;
-                stopInterceptRequestLayout(false);
-            } else if (mState.mRunPredictiveAnimations) {
-                // If mAdapterUpdateDuringMeasure is false and mRunPredictiveAnimations is true:
-                // this means there is already an onMeasure() call performed to handle the pending
-                // adapter change, two onMeasure() calls can happen if RV is a child of LinearLayout
-                // with layout_width=MATCH_PARENT. RV cannot call LM.onMeasure() second time
-                // because getViewForPosition() will crash when LM uses a child to measure.
-                setMeasuredDimension(getMeasuredWidth(), getMeasuredHeight());
-                return;
-            }
-
-            if (mAdapter != null) {
-                mState.mItemCount = mAdapter.getItemCount();
-            } else {
-                mState.mItemCount = 0;
-            }
-            startInterceptRequestLayout();
-            //LayoutManager
-            mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
-            stopInterceptRequestLayout(false);
-            mState.mInPreLayout = false; // clear
-        }
+        });
+        //
+        initData();
+        //
+        RecyclerView id_rv = findViewById(R.id.id_rv);
+        id_rv.setLayoutManager(new LinearLayoutManager(this));
+        id_rv.setItemAnimator(new DefaultItemAnimator());
+        mDataItemRVAdapter = new DataItemRVAdapter();
+        //初始化
+        id_rv.setAdapter(mDataItemRVAdapter);
+        mDataItemRVAdapter.setDataItemList(mDataItemList);
     }
 
+    private void initData() {
+        mDataItemList = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            DataItem dataItem = new DataItem();
+            dataItem.id = String.valueOf(i + 1);
+            dataItem.title = dataItem.id + " title";
+            dataItem.subtitle = dataItem.id + " subtitle";
+            dataItem.content = dataItem.id + " content";
+            dataItem.imageResId = R.mipmap.ic_launcher;
+            mDataItemList.add(dataItem);
+        }
+
+    }
+
+    private void refreshData() {
+        //mDataItemList 存放最新的数据
+        //1 修改数据
+        //引用传递，会影响 Adapter 里 list（虽然 Adapter 里 list 已经是 new ArrayList 了）对应索引的对象的值，但是因为这里不影响
+        mDataItemList.get(1).title = "222 title new";
+        mDataItemList.get(1).subtitle = "222 subtitle new";
+        mDataItemList.get(1).content = "222 content new";
+        //2 更新 Adapter 数据源
+        mDataItemRVAdapter.setDataItemList(mDataItemList);
+        //3 通过 Adapter#notifyDataSetChanged 方式通知数据刷新
+        mDataItemRVAdapter.notifyDataSetChanged();
+
+    }
+}
 ```
 
 
 
-## RecyclerView#dispatchLayoutStep1
+
+
+### 1 全局刷新
+
+- 列表刷新
 
 ```java
-  /**
-     * The first step of a layout where we;
-     * - process adapter updates
-     * - decide which animation should run
-     * - save information about current views
-     * - If necessary, run predictive layout and save its information
-     */
-    private void dispatchLayoutStep1() {
-        mState.assertLayoutStep(State.STEP_START);
-        fillRemainingScrollValues(mState);
-        mState.mIsMeasuring = false;
-        startInterceptRequestLayout();
-        mViewInfoStore.clear();
-        onEnterLayoutOrScroll();
-        processAdapterUpdatesAndSetAnimationFlags();
-        saveFocusInfo();
-        mState.mTrackOldChangeHolders = mState.mRunSimpleAnimations && mItemsChanged;
-        mItemsAddedOrRemoved = mItemsChanged = false;
-        mState.mInPreLayout = mState.mRunPredictiveAnimations;
-        mState.mItemCount = mAdapter.getItemCount();
-        findMinMaxChildLayoutPositions(mMinMaxLayoutPositions);
+//列表可见部分全部刷新
+mAdapter.notifyDataSetChanged()
+```
 
-        if (mState.mRunSimpleAnimations) {
-            // Step 0: Find out where all non-removed items are, pre-layout
-            int count = mChildHelper.getChildCount();
-            for (int i = 0; i < count; ++i) {
-                final ViewHolder holder = getChildViewHolderInt(mChildHelper.getChildAt(i));
-                if (holder.shouldIgnore() || (holder.isInvalid() && !mAdapter.hasStableIds())) {
-                    continue;
-                }
-                final ItemHolderInfo animationInfo = mItemAnimator
-                        .recordPreLayoutInformation(mState, holder,
-                                ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),
-                                holder.getUnmodifiedPayloads());
-                mViewInfoStore.addToPreLayout(holder, animationInfo);
-                if (mState.mTrackOldChangeHolders && holder.isUpdated() && !holder.isRemoved()
-                        && !holder.shouldIgnore() && !holder.isInvalid()) {
-                    long key = getChangedHolderKey(holder);
-                    // This is NOT the only place where a ViewHolder is added to old change holders
-                    // list. There is another case where:
-                    //    * A VH is currently hidden but not deleted
-                    //    * The hidden item is changed in the adapter
-                    //    * Layout manager decides to layout the item in the pre-Layout pass (step1)
-                    // When this case is detected, RV will un-hide that view and add to the old
-                    // change holders list.
-                    mViewInfoStore.addToOldChangeHolders(key, holder);
-                }
-            }
-        }
-        if (mState.mRunPredictiveAnimations) {
-            // Step 1: run prelayout: This will use the old positions of items. The layout manager
-            // is expected to layout everything, even removed items (though not to add removed
-            // items back to the container). This gives the pre-layout position of APPEARING views
-            // which come into existence as part of the real layout.
 
-            // Save old positions so that LayoutManager can run its mapping logic.
-            saveOldPositions();
-            final boolean didStructureChange = mState.mStructureChanged;
-            mState.mStructureChanged = false;
-            // temporarily disable flag because we are asking for previous layout
-            mLayout.onLayoutChildren(mRecycler, mState);
-            mState.mStructureChanged = didStructureChange;
 
-            for (int i = 0; i < mChildHelper.getChildCount(); ++i) {
-                final View child = mChildHelper.getChildAt(i);
-                final ViewHolder viewHolder = getChildViewHolderInt(child);
-                if (viewHolder.shouldIgnore()) {
-                    continue;
-                }
-                if (!mViewInfoStore.isInPreLayout(viewHolder)) {
-                    int flags = ItemAnimator.buildAdapterChangeFlagsForAnimations(viewHolder);
-                    boolean wasHidden = viewHolder
-                            .hasAnyOfTheFlags(ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST);
-                    if (!wasHidden) {
-                        flags |= ItemAnimator.FLAG_APPEARED_IN_PRE_LAYOUT;
-                    }
-                    final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(
-                            mState, viewHolder, flags, viewHolder.getUnmodifiedPayloads());
-                    if (wasHidden) {
-                        recordAnimationInfoIfBouncedHiddenView(viewHolder, animationInfo);
-                    } else {
-                        mViewInfoStore.addToAppearedInPreLayoutHolders(viewHolder, animationInfo);
-                    }
-                }
-            }
-            // we don't process disappearing list because they may re-appear in post layout pass.
-            clearOldPositions();
+### 2 局部刷新 Item 刷新
+
+- Item 整体刷新
+
+```java
+//修改指定 position 上 Item 的刷新
+mAdapter.notifyItemChanged(int position)
+//添加指定 position 上 Item 的刷新
+mAdapter.notifyItemInserted(int position)
+//移除指定 position 上 Item 的刷新
+mAdapter.notifyItemRemoved(int position)
+//修改从 positionStart 开始到 itemCount 数量的 Item 的刷新
+mAdapter.notifyItemRangeChanged(int positionStart, int itemCount)
+//添加从 positionStart 开始到 itemCount 数量的 Item 的刷新
+mAdapter.notifyItemRangeInserted(int positionStart, int itemCount)
+//移除从 positionStart 开始到 itemCount 数量的 Item 的刷新
+mAdapter.notifyItemRangeRemoved(int positionStart, int itemCount)
+
+//移到指定 fromPosition 到 toPosition 上 Item 的刷新
+mAdapter.notifyItemMoved(int fromPosition, int toPosition)
+```
+
+
+
+### 3 局部刷新 View 刷新
+
+- Item 的部分 View 控件刷新
+
+```java
+//修改指定 position 上 Item 局部 View 的刷新，
+mAdapter.notifyItemChanged(int position,Object payload)
+//修改从 positionStart 开始到 itemCount 数量的 Item 局部 View 的刷新
+mAdapter.notifyItemRangeChanged(int positionStart, int itemCount,Object payload)
+```
+
+- 假设 payload 只传 【key 标记】的话，刷新前的数据源就需要修改完毕，这样 Adapter 才直接用数据源
+- 另外 payload 可以传 【key-value 键值对】，比如 Map ，那么 Adapter 可以不用数据源而改用 value
+
+
+
+#### 修改 DataItemRVAdapter
+
+- 覆写带 Payload 参数的 onBindViewHolder 方法
+
+```java
+ @Override
+    public void onBindViewHolder(@NonNull DataItemViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            //【列表刷新】 或者 【列表局部 Item 刷新】
+            super.onBindViewHolder(holder, position, payloads);
         } else {
-            clearOldPositions();
-        }
-        onExitLayoutOrScroll();
-        stopInterceptRequestLayout(false);
-        mState.mLayoutStep = State.STEP_LAYOUT;
-    }
-
-```
-
-
-
-
-
-## RecyclerView#dispatchLayoutStep2
-
-```java
- /**
-     * The second layout step where we do the actual layout of the views for the final state.
-     * This step might be run multiple times if necessary (e.g. measure).
-     */
-    private void dispatchLayoutStep2() {
-        startInterceptRequestLayout();
-        onEnterLayoutOrScroll();
-        mState.assertLayoutStep(State.STEP_LAYOUT | State.STEP_ANIMATIONS);
-        mAdapterHelper.consumeUpdatesInOnePass();
-        mState.mItemCount = mAdapter.getItemCount();
-        mState.mDeletedInvisibleItemCountSincePreviousLayout = 0;
-        if (mPendingSavedState != null && mAdapter.canRestoreState()) {
-            if (mPendingSavedState.mLayoutState != null) {
-                mLayout.onRestoreInstanceState(mPendingSavedState.mLayoutState);
-            }
-            mPendingSavedState = null;
-        }
-        // Step 2: Run layout
-        mState.mInPreLayout = false;
-        mLayout.onLayoutChildren(mRecycler, mState);
-
-        mState.mStructureChanged = false;
-
-        // onLayoutChildren may have caused client code to disable item animations; re-check
-        mState.mRunSimpleAnimations = mState.mRunSimpleAnimations && mItemAnimator != null;
-        mState.mLayoutStep = State.STEP_ANIMATIONS;
-        onExitLayoutOrScroll();
-        stopInterceptRequestLayout(false);
-    }
-
-```
-
-
-
-## LinearLayoutManager#onLayoutChildren
-
-```java
-@Override
-    public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-        // layout algorithm:
-        // 1) by checking children and other variables, find an anchor coordinate and an anchor
-        //  item position.
-        // 2) fill towards start, stacking from bottom
-        // 3) fill towards end, stacking from top
-        // 4) scroll to fulfill requirements like stack from bottom.
-        // create layout state
-        if (DEBUG) {
-            Log.d(TAG, "is pre layout:" + state.isPreLayout());
-        }
-        if (mPendingSavedState != null || mPendingScrollPosition != RecyclerView.NO_POSITION) {
-            if (state.getItemCount() == 0) {
-                removeAndRecycleAllViews(recycler);
-                return;
-            }
-        }
-        if (mPendingSavedState != null && mPendingSavedState.hasValidAnchor()) {
-            mPendingScrollPosition = mPendingSavedState.mAnchorPosition;
-        }
-
-        ensureLayoutState();
-        mLayoutState.mRecycle = false;
-        // resolve layout direction
-        resolveShouldLayoutReverse();
-
-        final View focused = getFocusedChild();
-        if (!mAnchorInfo.mValid || mPendingScrollPosition != RecyclerView.NO_POSITION
-                || mPendingSavedState != null) {
-            mAnchorInfo.reset();
-            mAnchorInfo.mLayoutFromEnd = mShouldReverseLayout ^ mStackFromEnd;
-            // calculate anchor position and coordinate
-            updateAnchorInfoForLayout(recycler, state, mAnchorInfo);
-            mAnchorInfo.mValid = true;
-        } else if (focused != null && (mOrientationHelper.getDecoratedStart(focused)
-                >= mOrientationHelper.getEndAfterPadding()
-                || mOrientationHelper.getDecoratedEnd(focused)
-                <= mOrientationHelper.getStartAfterPadding())) {
-            // This case relates to when the anchor child is the focused view and due to layout
-            // shrinking the focused view fell outside the viewport, e.g. when soft keyboard shows
-            // up after tapping an EditText which shrinks RV causing the focused view (The tapped
-            // EditText which is the anchor child) to get kicked out of the screen. Will update the
-            // anchor coordinate in order to make sure that the focused view is laid out. Otherwise,
-            // the available space in layoutState will be calculated as negative preventing the
-            // focused view from being laid out in fill.
-            // Note that we won't update the anchor position between layout passes (refer to
-            // TestResizingRelayoutWithAutoMeasure), which happens if we were to call
-            // updateAnchorInfoForLayout for an anchor that's not the focused view (e.g. a reference
-            // child which can change between layout passes).
-            mAnchorInfo.assignFromViewAndKeepVisibleRect(focused, getPosition(focused));
-        }
-        if (DEBUG) {
-            Log.d(TAG, "Anchor info:" + mAnchorInfo);
-        }
-
-        // LLM may decide to layout items for "extra" pixels to account for scrolling target,
-        // caching or predictive animations.
-
-        mLayoutState.mLayoutDirection = mLayoutState.mLastScrollDelta >= 0
-                ? LayoutState.LAYOUT_END : LayoutState.LAYOUT_START;
-        mReusableIntPair[0] = 0;
-        mReusableIntPair[1] = 0;
-        calculateExtraLayoutSpace(state, mReusableIntPair);
-        int extraForStart = Math.max(0, mReusableIntPair[0])
-                + mOrientationHelper.getStartAfterPadding();
-        int extraForEnd = Math.max(0, mReusableIntPair[1])
-                + mOrientationHelper.getEndPadding();
-        if (state.isPreLayout() && mPendingScrollPosition != RecyclerView.NO_POSITION
-                && mPendingScrollPositionOffset != INVALID_OFFSET) {
-            // if the child is visible and we are going to move it around, we should layout
-            // extra items in the opposite direction to make sure new items animate nicely
-            // instead of just fading in
-            final View existing = findViewByPosition(mPendingScrollPosition);
-            if (existing != null) {
-                final int current;
-                final int upcomingOffset;
-                if (mShouldReverseLayout) {
-                    current = mOrientationHelper.getEndAfterPadding()
-                            - mOrientationHelper.getDecoratedEnd(existing);
-                    upcomingOffset = current - mPendingScrollPositionOffset;
-                } else {
-                    current = mOrientationHelper.getDecoratedStart(existing)
-                            - mOrientationHelper.getStartAfterPadding();
-                    upcomingOffset = mPendingScrollPositionOffset - current;
+            //【Item 局部 View 刷新】
+            Object payload = payloads.get(0);
+            if (payload instanceof Map) {
+                //【key-value 键值对】
+                Map<String, String> map = (Map<String, String>) payload;
+                for (Map.Entry<String, String> stringObjectEntry : map.entrySet()) {
+                    String key = stringObjectEntry.getKey();
+                    String value = stringObjectEntry.getValue();
+                    //简单封装
+                    bindViewHolder(holder, position, key, value);
                 }
-                if (upcomingOffset > 0) {
-                    extraForStart += upcomingOffset;
-                } else {
-                    extraForEnd -= upcomingOffset;
-                }
+            } else if (payload instanceof String) {
+                //【key 标记】
+                String key = (String) payload;
+                //简单封装
+                bindViewHolder(holder, position, key, null);
             }
-        }
-        int startOffset;
-        int endOffset;
-        final int firstLayoutDirection;
-        if (mAnchorInfo.mLayoutFromEnd) {
-            firstLayoutDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_TAIL
-                    : LayoutState.ITEM_DIRECTION_HEAD;
-        } else {
-            firstLayoutDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_HEAD
-                    : LayoutState.ITEM_DIRECTION_TAIL;
-        }
 
-        onAnchorReady(recycler, state, mAnchorInfo, firstLayoutDirection);
-        detachAndScrapAttachedViews(recycler);
-        mLayoutState.mInfinite = resolveIsInfinite();
-        mLayoutState.mIsPreLayout = state.isPreLayout();
-        // noRecycleSpace not needed: recycling doesn't happen in below's fill
-        // invocations because mScrollingOffset is set to SCROLLING_OFFSET_NaN
-        mLayoutState.mNoRecycleSpace = 0;
-        if (mAnchorInfo.mLayoutFromEnd) {
-            // fill towards start
-            updateLayoutStateToFillStart(mAnchorInfo);
-            mLayoutState.mExtraFillSpace = extraForStart;
-            fill(recycler, mLayoutState, state, false);
-            startOffset = mLayoutState.mOffset;
-            final int firstElement = mLayoutState.mCurrentPosition;
-            if (mLayoutState.mAvailable > 0) {
-                extraForEnd += mLayoutState.mAvailable;
-            }
-            // fill towards end
-            updateLayoutStateToFillEnd(mAnchorInfo);
-            mLayoutState.mExtraFillSpace = extraForEnd;
-            mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
-            fill(recycler, mLayoutState, state, false);
-            endOffset = mLayoutState.mOffset;
-
-            if (mLayoutState.mAvailable > 0) {
-                // end could not consume all. add more items towards start
-                extraForStart = mLayoutState.mAvailable;
-                updateLayoutStateToFillStart(firstElement, startOffset);
-                mLayoutState.mExtraFillSpace = extraForStart;
-                fill(recycler, mLayoutState, state, false);
-                startOffset = mLayoutState.mOffset;
-            }
-        } else {
-            // fill towards end
-            updateLayoutStateToFillEnd(mAnchorInfo);
-            mLayoutState.mExtraFillSpace = extraForEnd;
-            fill(recycler, mLayoutState, state, false);
-            endOffset = mLayoutState.mOffset;
-            final int lastElement = mLayoutState.mCurrentPosition;
-            if (mLayoutState.mAvailable > 0) {
-                extraForStart += mLayoutState.mAvailable;
-            }
-            // fill towards start
-            updateLayoutStateToFillStart(mAnchorInfo);
-            mLayoutState.mExtraFillSpace = extraForStart;
-            mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
-            fill(recycler, mLayoutState, state, false);
-            startOffset = mLayoutState.mOffset;
-
-            if (mLayoutState.mAvailable > 0) {
-                extraForEnd = mLayoutState.mAvailable;
-                // start could not consume all it should. add more items towards end
-                updateLayoutStateToFillEnd(lastElement, endOffset);
-                mLayoutState.mExtraFillSpace = extraForEnd;
-                fill(recycler, mLayoutState, state, false);
-                endOffset = mLayoutState.mOffset;
-            }
         }
+    }
 
-        // changes may cause gaps on the UI, try to fix them.
-        // TODO we can probably avoid this if neither stackFromEnd/reverseLayout/RTL values have
-        // changed
-        if (getChildCount() > 0) {
-            // because layout from end may be changed by scroll to position
-            // we re-calculate it.
-            // find which side we should check for gaps.
-            if (mShouldReverseLayout ^ mStackFromEnd) {
-                int fixOffset = fixLayoutEndGap(endOffset, recycler, state, true);
-                startOffset += fixOffset;
-                endOffset += fixOffset;
-                fixOffset = fixLayoutStartGap(startOffset, recycler, state, false);
-                startOffset += fixOffset;
-                endOffset += fixOffset;
-            } else {
-                int fixOffset = fixLayoutStartGap(startOffset, recycler, state, true);
-                startOffset += fixOffset;
-                endOffset += fixOffset;
-                fixOffset = fixLayoutEndGap(endOffset, recycler, state, false);
-                startOffset += fixOffset;
-                endOffset += fixOffset;
-            }
-        }
-        layoutForPredictiveAnimations(recycler, state, startOffset, endOffset);
-        if (!state.isPreLayout()) {
-            mOrientationHelper.onLayoutComplete();
-        } else {
-            mAnchorInfo.reset();
-        }
-        mLastStackFromEnd = mStackFromEnd;
-        if (DEBUG) {
-            validateChildOrder();
+    private void bindViewHolder(DataItemViewHolder holder, int position, String key, String value) {
+        DataItem dataItem = mDataItemList.get(position);
+        if (key.equals(KEY_TITLE)) {
+            holder.id_tv_title.setText(value != null ? value : dataItem.title);
+        } else if (key.equals(KEY_SUBTITLE)) {
+            holder.id_tv_subtitle.setText(value != null ? value : dataItem.content);
+        } else if (key.equals(KEY_CONTENT)) {
+            holder.id_tv_content.setText(value != null ? value : dataItem.content);
+        } else if (key.equals(KEY_IMAGE)) {
+            holder.id_iv.setImageResource(value != null ? Integer.parseInt(value) : dataItem.imageResId);
         }
     }
 
@@ -490,612 +364,323 @@ RecyclerView$Recycler
 
 
 
-## LinearLayoutManager#fill
+## 使用 DiffUtil 刷新数据
+
+ 
+
+### 1 局部刷新 Item 刷新
+
+- Item 整体刷新
+
+
+
+#### 创建 DiffUtilCallback
 
 ```java
-   /**
-     * The magic functions :). Fills the given layout, defined by the layoutState. This is fairly
-     * independent from the rest of the {@link LinearLayoutManager}
-     * and with little change, can be made publicly available as a helper class.
-     *
-     * @param recycler        Current recycler that is attached to RecyclerView
-     * @param layoutState     Configuration on how we should fill out the available space.
-     * @param state           Context passed by the RecyclerView to control scroll steps.
-     * @param stopOnFocusable If true, filling stops in the first focusable new child
-     * @return Number of pixels that it added. Useful for scroll functions.
-     */
-    int fill(RecyclerView.Recycler recycler, LayoutState layoutState,
-            RecyclerView.State state, boolean stopOnFocusable) {
-        // max offset we should set is mFastScroll + available
-        final int start = layoutState.mAvailable;
-        if (layoutState.mScrollingOffset != LayoutState.SCROLLING_OFFSET_NaN) {
-            // TODO ugly bug fix. should not happen
-            if (layoutState.mAvailable < 0) {
-                layoutState.mScrollingOffset += layoutState.mAvailable;
-            }
-            recycleByLayoutState(recycler, layoutState);
-        }
-        int remainingSpace = layoutState.mAvailable + layoutState.mExtraFillSpace;
-        LayoutChunkResult layoutChunkResult = mLayoutChunkResult;
-        while ((layoutState.mInfinite || remainingSpace > 0) && layoutState.hasMore(state)) {
-            layoutChunkResult.resetInternal();
-            if (RecyclerView.VERBOSE_TRACING) {
-                TraceCompat.beginSection("LLM LayoutChunk");
-            }
-            layoutChunk(recycler, state, layoutState, layoutChunkResult);
-            if (RecyclerView.VERBOSE_TRACING) {
-                TraceCompat.endSection();
-            }
-            if (layoutChunkResult.mFinished) {
-                break;
-            }
-            layoutState.mOffset += layoutChunkResult.mConsumed * layoutState.mLayoutDirection;
-            /**
-             * Consume the available space if:
-             * * layoutChunk did not request to be ignored
-             * * OR we are laying out scrap children
-             * * OR we are not doing pre-layout
-             */
-            if (!layoutChunkResult.mIgnoreConsumed || layoutState.mScrapList != null
-                    || !state.isPreLayout()) {
-                layoutState.mAvailable -= layoutChunkResult.mConsumed;
-                // we keep a separate remaining space because mAvailable is important for recycling
-                remainingSpace -= layoutChunkResult.mConsumed;
-            }
+public class DiffUtilCallback extends DiffUtil.Callback {
+    private List<DataItem> mOldDataItemList;
+    private List<DataItem> mNewDataItemList;
 
-            if (layoutState.mScrollingOffset != LayoutState.SCROLLING_OFFSET_NaN) {
-                layoutState.mScrollingOffset += layoutChunkResult.mConsumed;
-                if (layoutState.mAvailable < 0) {
-                    layoutState.mScrollingOffset += layoutState.mAvailable;
-                }
-                recycleByLayoutState(recycler, layoutState);
-            }
-            if (stopOnFocusable && layoutChunkResult.mFocusable) {
-                break;
-            }
-        }
-        if (DEBUG) {
-            validateChildOrder();
-        }
-        return start - layoutState.mAvailable;
+    public DiffCallback(List<DataItem> oldDataItemList, List<DataItem> newDataItemList) {
+        this.mOldDataItemList = oldDataItemList;
+        this.mNewDataItemList = newDataItemList;
     }
+
+    @Override
+    public int getOldListSize() {
+        return mOldDataItemList != null ? mOldDataItemList.size() : 0;
+    }
+
+    @Override
+    public int getNewListSize() {
+        return mNewDataItemList != null ? mNewDataItemList.size() : 0;
+    }
+
+    @Override
+    public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+        //判断是不是同一个 item 的逻辑
+        DataItem oldDataItem = mOldDataItemList.get(oldItemPosition);
+        DataItem newDataItem = mNewDataItemList.get(newItemPosition);
+        return Objects.equals(oldDataItem.id, newDataItem.id);
+    }
+
+    @Override
+    public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+        //areItemsTheSame 返回 true 的情况下走这个方法，进一步判断这个 item 的内容是否有变化
+        DataItem oldDataItem = mOldDataItemList.get(oldItemPosition);
+        DataItem newDataItem = mNewDataItemList.get(newItemPosition);
+        // id
+        if (!Objects.equals(oldDataItem.id, newDataItem.id)) {
+            return false;
+        }
+        // name
+        if (!Objects.equals(oldDataItem.name, newDataItem.name)) {
+            return false;
+        }
+        // content
+        if (!Objects.equals(oldDataItem.content, newDataItem.content)) {
+            return false;
+        }
+        //如果还有，继续写其他判断条件
+
+        //默认返回内容相等
+        return true;
+    }
+}
 ```
 
 
 
-## LinearLayoutManager#layoutChunk
-
-
+#### 修改 MainActivity 使用
 
 ```java
-  void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,
-            LayoutState layoutState, LayoutChunkResult result) {
-        View view = layoutState.next(recycler);
-        if (view == null) {
-            if (DEBUG && layoutState.mScrapList == null) {
-                throw new RuntimeException("received null view when unexpected");
+private void refreshDataByDiffUtil() {
+        List<DataItem> oldDataItemList = new ArrayList<>(mDataItemRVAdapter.getDataItemList());
+        //mDataItemList 存放最新的数据
+        //1 修改数据
+        //别这么写！！！引用传递 引用传递会导致 calculateDiff 失效
+//        mDataItemList.get(1).name = "222 new";
+        DataItem oldDataItem = mDataItemList.get(2);
+        DataItem newDataItem = new DataItem();
+        newDataItem.id = oldDataItem.id;
+        newDataItem.name = "333 new";//就改一个字段
+        newDataItem.content = oldDataItem.content;
+        mDataItemList.set(2, newDataItem);
+        //2 更新 Adapter 数据源
+        mDataItemRVAdapter.setDataItemList(mDataItemList);
+        //3 DiffUtil 方式通知刷新
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffCallback(oldDataItemList, mDataItemList));
+        //内部最终就是调用 Adapter#notifyItemXXX 系列方法实现的
+        diffResult.dispatchUpdatesTo(mDataItemRVAdapter);
+}
+```
+
+- 能够保留了 item 动画
+
+
+
+
+
+### 2 局部刷新 View 刷新
+
+- Item 的部分 View 控件刷新
+
+- 同上，Adapter 需要覆写带 Payload 参数的 onBindViewHolder 方法
+
+
+
+#### 修改 DiffUtilCallback
+
+- 覆写 getChangePayload 方法
+
+```java
+    @Nullable
+    @Override
+    public Object getChangePayload(int oldItemPosition, int newItemPosition) {
+        DataItem oldDataItem = mOldDataItemList.get(oldItemPosition);
+        DataItem newDataItem = mNewDataItemList.get(newItemPosition);
+//        areItemsTheSame 返回 true 并且 areContentsTheSame 返回 false 的情况才会进来
+        Map<String, String> payloadMap = new HashMap<>();
+        // title
+        if (!Objects.equals(oldDataItem.title, newDataItem.title)) {
+            payloadMap.put(DataItemRVAdapter.KEY_TITLE, newDataItem.title);
+        }
+        // title
+        if (!Objects.equals(oldDataItem.subtitle, newDataItem.subtitle)) {
+            payloadMap.put(DataItemRVAdapter.KEY_SUBTITLE, newDataItem.subtitle);
+        }
+        // content
+        if (!Objects.equals(oldDataItem.content, newDataItem.content)) {
+            payloadMap.put(DataItemRVAdapter.KEY_CONTENT, newDataItem.content);
+        }
+        // imageResId
+        if (oldDataItem.imageResId != newDataItem.imageResId) {
+            payloadMap.put(DataItemRVAdapter.KEY_IMAGE, String.valueOf(newDataItem.imageResId));
+        }
+        if (!payloadMap.isEmpty()) {
+            return payloadMap;
+        }
+        //默认无变化，内部传的是 null
+        return super.getChangePayload(oldItemPosition, newItemPosition);
+    }
+```
+
+使用
+
+- 同上
+
+
+
+
+
+
+
+## 使用 ItemTouchHelper 实现拖拽侧滑
+
+### 创建 ItemTouchHelperCallback
+
+```java
+public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
+    private static final String TAG = "ItemTouchHelperCallback";
+    private DataItemRVAdapter mDataItemRVAdapter;
+
+    public ItemTouchHelperCallback(DataItemRVAdapter dataItemRVAdapter) {
+        this.mDataItemRVAdapter = dataItemRVAdapter;
+    }
+
+    @Override
+    public int getMovementFlags(@NonNull RecyclerView recyclerView,
+                                @NonNull RecyclerView.ViewHolder viewHolder) {
+        //拖拽方向
+        int dragFlags = 0;
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            //拖拽方向
+            dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+        } else if (layoutManager instanceof GridLayoutManager) {
+            // Grid 四个方向都可以拖拽
+            dragFlags = ItemTouchHelper.UP | ItemTouchHelper.LEFT | ItemTouchHelper.DOWN | ItemTouchHelper.RIGHT;
+        }
+        //滑动方向 这里向左侧滑
+        int swipeFlags = ItemTouchHelper.LEFT;
+        //
+        return makeMovementFlags(dragFlags, swipeFlags);
+//        return 0;
+    }
+
+    @Override
+    public boolean onMove(@NonNull RecyclerView recyclerView,
+                          @NonNull RecyclerView.ViewHolder viewHolder,
+                          @NonNull RecyclerView.ViewHolder target) {
+        //当拖动效果已经产生了，就会回调此方法
+        int fromPosition = viewHolder.getAdapterPosition();
+        int toPosition = target.getAdapterPosition();
+        List<DataItem> dataItemList = mDataItemRVAdapter.getDataItemList();
+        //交换数据
+        Log.e(TAG, "onMove: fromPosition " + fromPosition + " toPosition " + toPosition);
+        //移动过程中，没有放开就会回调，所以会调用很多次
+        Collections.swap(dataItemList, fromPosition, toPosition);
+      /*不需要这么写  if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(dataItemList, i, i + 1);
             }
-            // if we are laying out views in scrap, this may return null which means there is
-            // no more items to layout.
-            result.mFinished = true;
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(dataItemList, i, i - 1);
+            }
+        }*/
+        StringBuffer stringBuffer = new StringBuffer();
+        for (DataItem dataItem : dataItemList) {
+            stringBuffer.append(dataItem.title);
+        }
+        Log.e(TAG, "onMove: " + stringBuffer.toString());
+        mDataItemRVAdapter.notifyItemMoved(fromPosition, toPosition);
+
+        //返回 true 可以回调 onMoved 方法
+//        return true;
+        return false;
+    }
+
+    @Override
+    public void onMoved(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, int fromPos, @NonNull RecyclerView.ViewHolder target, int toPos, int x, int y) {
+        super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y);
+//        onMove 方法返回 true 才会走这
+        Log.e(TAG, "onMoved: ");
+    }
+
+    @Override
+    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder,
+                         int direction) {
+        //侧滑删除
+        int position = viewHolder.getAdapterPosition();
+        mDataItemRVAdapter.getDataItemList().remove(position);
+        //
+        mDataItemRVAdapter.notifyItemRemoved(position);
+    }
+
+    @Override
+    public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+        super.onSelectedChanged(viewHolder, actionState);
+        //
+        Log.e(TAG, "onSelectedChanged: " );
+        if (viewHolder == null) {
             return;
         }
-        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) view.getLayoutParams();
-        if (layoutState.mScrapList == null) {
-            if (mShouldReverseLayout == (layoutState.mLayoutDirection
-                    == LayoutState.LAYOUT_START)) {
-                addView(view);
-            } else {
-                addView(view, 0);
-            }
-        } else {
-            if (mShouldReverseLayout == (layoutState.mLayoutDirection
-                    == LayoutState.LAYOUT_START)) {
-                addDisappearingView(view);
-            } else {
-                addDisappearingView(view, 0);
-            }
-        }
-        measureChildWithMargins(view, 0, 0);
-        result.mConsumed = mOrientationHelper.getDecoratedMeasurement(view);
-        int left, top, right, bottom;
-        if (mOrientation == VERTICAL) {
-            if (isLayoutRTL()) {
-                right = getWidth() - getPaddingRight();
-                left = right - mOrientationHelper.getDecoratedMeasurementInOther(view);
-            } else {
-                left = getPaddingLeft();
-                right = left + mOrientationHelper.getDecoratedMeasurementInOther(view);
-            }
-            if (layoutState.mLayoutDirection == LayoutState.LAYOUT_START) {
-                bottom = layoutState.mOffset;
-                top = layoutState.mOffset - result.mConsumed;
-            } else {
-                top = layoutState.mOffset;
-                bottom = layoutState.mOffset + result.mConsumed;
-            }
-        } else {
-            top = getPaddingTop();
-            bottom = top + mOrientationHelper.getDecoratedMeasurementInOther(view);
 
-            if (layoutState.mLayoutDirection == LayoutState.LAYOUT_START) {
-                right = layoutState.mOffset;
-                left = layoutState.mOffset - result.mConsumed;
-            } else {
-                left = layoutState.mOffset;
-                right = layoutState.mOffset + result.mConsumed;
-            }
+        int position = viewHolder.getAdapterPosition();
+        //
+        if (actionState == ItemTouchHelper.ACTION_STATE_IDLE) {
+            //
+            viewHolder.itemView.setBackgroundColor(Color.RED);
+//            mDataItemRVAdapter.getDataItemList().get(position).bgColor = Color.RED;
+//            mDataItemRVAdapter.notifyItemChanged(position);
+        } else if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+            //开始滑动
+            //如果和item默认颜色不一致的话 注意要解决复用后导致的错乱
+            viewHolder.itemView.setBackgroundColor(Color.GREEN);
+//            mDataItemRVAdapter.getDataItemList().get(position).bgColor = Color.GREEN;
+//            mDataItemRVAdapter.notifyItemChanged(position);
+        } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+            //开始拖拽
+            //如果和item默认颜色不一致的话 注意要解决复用后导致的错乱
+            viewHolder.itemView.setBackgroundColor(Color.BLUE);
+//            mDataItemRVAdapter.getDataItemList().get(position).bgColor = Color.BLUE;
+//            mDataItemRVAdapter.notifyItemChanged(position);
+//            viewHolder.itemView.setTranslationZ(10);
+
         }
-        // We calculate everything with View's bounding box (which includes decor and margins)
-        // To calculate correct layout position, we subtract margins.
-        layoutDecoratedWithMargins(view, left, top, right, bottom);
-        if (DEBUG) {
-            Log.d(TAG, "laid out child at position " + getPosition(view) + ", with l:"
-                    + (left + params.leftMargin) + ", t:" + (top + params.topMargin) + ", r:"
-                    + (right - params.rightMargin) + ", b:" + (bottom - params.bottomMargin));
-        }
-        // Consume the available space if the view is not removed OR changed
-        if (params.isItemRemoved() || params.isItemChanged()) {
-            result.mIgnoreConsumed = true;
-        }
-        result.mFocusable = view.hasFocusable();
     }
 
+    @Override
+    public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+        super.clearView(recyclerView, viewHolder);
+        Log.e(TAG, "clearView: " );
+        if (viewHolder == null) {
+            return;
+        }
+        //拖拽或滑动结束时调用
+        int position = viewHolder.getAdapterPosition();
+        //如果和item默认颜色不一致的话 注意要解决复用后导致的错乱
+        viewHolder.itemView.setBackgroundColor(Color.GRAY);
+//        viewHolder.itemView.setBackgroundColor(Color.WHITE);
+//        mDataItemRVAdapter.getDataItemList().get(position).bgColor = Color.GRAY;
+//            viewHolder.itemView.setTranslationZ(0);
+    }
+
+    @Override
+    public boolean isItemViewSwipeEnabled() {
+
+        //默认内部返回 true
+        return super.isItemViewSwipeEnabled();
+    }
+
+    @Override
+    public boolean isLongPressDragEnabled() {
+
+        //默认内部返回 true
+        return super.isLongPressDragEnabled();
+    }
+
+    @Override
+    public float getSwipeThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
+        //是否判定为滑动的闸值
+        return super.getSwipeThreshold(viewHolder);
+    }
+
+    @Override
+    public float getMoveThreshold(@NonNull RecyclerView.ViewHolder viewHolder) {
+        //是否判定为拖拽的闸值
+        return super.getMoveThreshold(viewHolder);
+    }
+}
 ```
 
 
 
-## LinearLayoutManager.LayoutState#next
-
-```java
-     /**
-         * Gets the view for the next element that we should layout.
-         * Also updates current item index to the next item, based on {@link #mItemDirection}
-         *
-         * @return The next element that we should layout.
-         */
-        View next(RecyclerView.Recycler recycler) {
-            if (mScrapList != null) {
-                return nextViewFromScrapList();
-            }
-            final View view = recycler.getViewForPosition(mCurrentPosition);
-            mCurrentPosition += mItemDirection;
-            return view;
-        }
-```
-
-
-
-
-
-## RecyclerView$Recycler#getViewForPosition
-
-
-
-```java
- /**
-         * Obtain a view initialized for the given position.
-         *
-         * This method should be used by {@link LayoutManager} implementations to obtain
-         * views to represent data from an {@link Adapter}.
-         * <p>
-         * The Recycler may reuse a scrap or detached view from a shared pool if one is
-         * available for the correct view type. If the adapter has not indicated that the
-         * data at the given position has changed, the Recycler will attempt to hand back
-         * a scrap view that was previously initialized for that data without rebinding.
-         *
-         * @param position Position to obtain a view for
-         * @return A view representing the data at <code>position</code> from <code>adapter</code>
-         */
-        @NonNull
-        public View getViewForPosition(int position) {
-            return getViewForPosition(position, false);
-        }
-
-        View getViewForPosition(int position, boolean dryRun) {
-            return tryGetViewHolderForPositionByDeadline(position, dryRun, FOREVER_NS).itemView;
-        }
-```
-
-
-
-
-
-## RecyclerView$Recycler#tryGetViewHolderForPositionByDeadline
-
-```java
- 
-final ArrayList<ViewHolder> mAttachedScrap = new ArrayList<>();
-ArrayList<ViewHolder> mChangedScrap = null;
-
-final ArrayList<ViewHolder> mCachedViews = new ArrayList<ViewHolder>();
-
-private final List<ViewHolder>
-                mUnmodifiableAttachedScrap = Collections.unmodifiableList(mAttachedScrap);
-
-RecycledViewPool mRecyclerPool;
-
-     /**
-         * Mark an attached view as scrap.
-         *
-         * <p>"Scrap" views are still attached to their parent RecyclerView but are eligible
-         * for rebinding and reuse. Requests for a view for a given position may return a
-         * reused or rebound scrap view instance.</p>
-         *
-         * @param view View to scrap
-         */
-        void scrapView(View view) {
-            final ViewHolder holder = getChildViewHolderInt(view);
-            if (holder.hasAnyOfTheFlags(ViewHolder.FLAG_REMOVED | ViewHolder.FLAG_INVALID)
-                    || !holder.isUpdated() || canReuseUpdatedViewHolder(holder)) {
-                if (holder.isInvalid() && !holder.isRemoved() && !mAdapter.hasStableIds()) {
-                    throw new IllegalArgumentException("Called scrap view with an invalid view."
-                            + " Invalid views cannot be reused from scrap, they should rebound from"
-                            + " recycler pool." + exceptionLabel());
-                }
-                holder.setScrapContainer(this, false);
-                mAttachedScrap.add(holder);
-            } else {
-                // mChangedScrap 实例化
-                if (mChangedScrap == null) {
-                    mChangedScrap = new ArrayList<ViewHolder>();
-                }
-                holder.setScrapContainer(this, true);
-                mChangedScrap.add(holder);
-            }
-        }
-
-
-/**
-         * Attempts to get the ViewHolder for the given position, either from the Recycler scrap,
-         * cache, the RecycledViewPool, or creating it directly.
-         * <p>
-         * If a deadlineNs other than {@link #FOREVER_NS} is passed, this method early return
-         * rather than constructing or binding a ViewHolder if it doesn't think it has time.
-         * If a ViewHolder must be constructed and not enough time remains, null is returned. If a
-         * ViewHolder is aquired and must be bound but not enough time remains, an unbound holder is
-         * returned. Use {@link ViewHolder#isBound()} on the returned object to check for this.
-         *
-         * @param position   Position of ViewHolder to be returned.
-         * @param dryRun     True if the ViewHolder should not be removed from scrap/cache/
-         * @param deadlineNs Time, relative to getNanoTime(), by which bind/create work should
-         *                   complete. If FOREVER_NS is passed, this method will not fail to
-         *                   create/bind the holder if needed.
-         * @return ViewHolder for requested position
-         */
-        @Nullable
-        ViewHolder tryGetViewHolderForPositionByDeadline(int position,
-                boolean dryRun, long deadlineNs) {
-            if (position < 0 || position >= mState.getItemCount()) {
-                throw new IndexOutOfBoundsException("Invalid item position " + position
-                        + "(" + position + "). Item count:" + mState.getItemCount()
-                        + exceptionLabel());
-            }
-            boolean fromScrapOrHiddenOrCache = false;
-            ViewHolder holder = null;
-            
-            // 0) If there is a changed scrap, try to find from there
-            if (mState.isPreLayout()) {
-                //从 mChangeScrap 里查找
-                holder = getChangedScrapViewForPosition(position);
-                fromScrapOrHiddenOrCache = holder != null;
-            }
-            // 1) Find by position from scrap/hidden list/cache
-            if (holder == null) {
-                //通过 position 在 mAttachScrap， mCachedViews 里查找
-                holder = getScrapOrHiddenOrCachedHolderForPosition(position, dryRun);
-                if (holder != null) {
-                    if (!validateViewHolderForOffsetPosition(holder)) {
-                        // recycle holder (and unscrap if relevant) since it can't be used
-                        if (!dryRun) {
-                            // we would like to recycle this but need to make sure it is not used by
-                            // animation logic etc.
-                            holder.addFlags(ViewHolder.FLAG_INVALID);
-                            if (holder.isScrap()) {
-                                removeDetachedView(holder.itemView, false);
-                                holder.unScrap();
-                            } else if (holder.wasReturnedFromScrap()) {
-                                holder.clearReturnedFromScrapFlag();
-                            }
-                            recycleViewHolderInternal(holder);
-                        }
-                        holder = null;
-                    } else {
-                        fromScrapOrHiddenOrCache = true;
-                    }
-                }
-            }
-            if (holder == null) {
-                final int offsetPosition = mAdapterHelper.findPositionOffset(position);
-                if (offsetPosition < 0 || offsetPosition >= mAdapter.getItemCount()) {
-                    throw new IndexOutOfBoundsException("Inconsistency detected. Invalid item "
-                            + "position " + position + "(offset:" + offsetPosition + ")."
-                            + "state:" + mState.getItemCount() + exceptionLabel());
-                }
-
-                final int type = mAdapter.getItemViewType(offsetPosition);
-                // 2) Find from scrap/cache via stable ids, if exists
-                if (mAdapter.hasStableIds()) {
-                    //通过 stableid 在 mAttachScrap， mCachedViews 里查找
-                    holder = getScrapOrCachedViewForId(mAdapter.getItemId(offsetPosition),
-                            type, dryRun);
-                    if (holder != null) {
-                        // update position
-                        holder.mPosition = offsetPosition;
-                        fromScrapOrHiddenOrCache = true;
-                    }
-                }
-                if (holder == null && mViewCacheExtension != null) {
-                    // We are NOT sending the offsetPosition because LayoutManager does not
-                    // know it.
-                    final View view = mViewCacheExtension
-                            .getViewForPositionAndType(this, position, type);
-                    if (view != null) {
-                        holder = getChildViewHolder(view);
-                        if (holder == null) {
-                            throw new IllegalArgumentException("getViewForPositionAndType returned"
-                                    + " a view which does not have a ViewHolder"
-                                    + exceptionLabel());
-                        } else if (holder.shouldIgnore()) {
-                            throw new IllegalArgumentException("getViewForPositionAndType returned"
-                                    + " a view that is ignored. You must call stopIgnoring before"
-                                    + " returning this view." + exceptionLabel());
-                        }
-                    }
-                }
-                if (holder == null) { // fallback to pool
-                    if (DEBUG) {
-                        Log.d(TAG, "tryGetViewHolderForPositionByDeadline("
-                                + position + ") fetching from shared pool");
-                    }
-                    //在 RecycledViewPool 缓存池里查找
-                    holder = getRecycledViewPool().getRecycledView(type);
-                    if (holder != null) {
-                        holder.resetInternal();
-                        if (FORCE_INVALIDATE_DISPLAY_LIST) {
-                            invalidateDisplayListInt(holder);
-                        }
-                    }
-                }
-                if (holder == null) {
-                    long start = getNanoTime();
-                    if (deadlineNs != FOREVER_NS
-                            && !mRecyclerPool.willCreateInTime(type, start, deadlineNs)) {
-                        // abort - we have a deadline we can't meet
-                        return null;
-                    }
-                    //无缓存，那么进行创建
-                    holder = mAdapter.createViewHolder(RecyclerView.this, type);
-                    if (ALLOW_THREAD_GAP_WORK) {
-                        // only bother finding nested RV if prefetching
-                        RecyclerView innerView = findNestedRecyclerView(holder.itemView);
-                        if (innerView != null) {
-                            holder.mNestedRecyclerView = new WeakReference<>(innerView);
-                        }
-                    }
-
-                    long end = getNanoTime();
-                    mRecyclerPool.factorInCreateTime(type, end - start);
-                    if (DEBUG) {
-                        Log.d(TAG, "tryGetViewHolderForPositionByDeadline created new ViewHolder");
-                    }
-                }
-            }
-
-            // This is very ugly but the only place we can grab this information
-            // before the View is rebound and returned to the LayoutManager for post layout ops.
-            // We don't need this in pre-layout since the VH is not updated by the LM.
-            if (fromScrapOrHiddenOrCache && !mState.isPreLayout() && holder
-                    .hasAnyOfTheFlags(ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST)) {
-                holder.setFlags(0, ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST);
-                if (mState.mRunSimpleAnimations) {
-                    int changeFlags = ItemAnimator
-                            .buildAdapterChangeFlagsForAnimations(holder);
-                    changeFlags |= ItemAnimator.FLAG_APPEARED_IN_PRE_LAYOUT;
-                    final ItemHolderInfo info = mItemAnimator.recordPreLayoutInformation(mState,
-                            holder, changeFlags, holder.getUnmodifiedPayloads());
-                    recordAnimationInfoIfBouncedHiddenView(holder, info);
-                }
-            }
-
-            boolean bound = false;
-            if (mState.isPreLayout() && holder.isBound()) {
-                // do not update unless we absolutely have to.
-                holder.mPreLayoutPosition = position;
-            } else if (!holder.isBound() || holder.needsUpdate() || holder.isInvalid()) {
-                if (DEBUG && holder.isRemoved()) {
-                    throw new IllegalStateException("Removed holder should be bound and it should"
-                            + " come here only in pre-layout. Holder: " + holder
-                            + exceptionLabel());
-                }
-                final int offsetPosition = mAdapterHelper.findPositionOffset(position);
-                bound = tryBindViewHolderByDeadline(holder, offsetPosition, position, deadlineNs);
-            }
-
-            final ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
-            final LayoutParams rvLayoutParams;
-            if (lp == null) {
-                rvLayoutParams = (LayoutParams) generateDefaultLayoutParams();
-                holder.itemView.setLayoutParams(rvLayoutParams);
-            } else if (!checkLayoutParams(lp)) {
-                rvLayoutParams = (LayoutParams) generateLayoutParams(lp);
-                holder.itemView.setLayoutParams(rvLayoutParams);
-            } else {
-                rvLayoutParams = (LayoutParams) lp;
-            }
-            rvLayoutParams.mViewHolder = holder;
-            rvLayoutParams.mPendingInvalidate = fromScrapOrHiddenOrCache && bound;
-            return holder;
-        }
-```
-
-
-
-### RecyclerView.Recycler#getChangedScrapViewForPosition
-
-
-
-```java
-  ViewHolder getChangedScrapViewForPosition(int position) {
-            // If pre-layout, check the changed scrap for an exact match.
-            final int changedScrapSize;
-            if (mChangedScrap == null || (changedScrapSize = mChangedScrap.size()) == 0) {
-                return null;
-            }
-            //LayoutPosition
-            // find by position
-            for (int i = 0; i < changedScrapSize; i++) {
-                final ViewHolder holder = mChangedScrap.get(i);
-                if (!holder.wasReturnedFromScrap() && holder.getLayoutPosition() == position) {
-                    holder.addFlags(ViewHolder.FLAG_RETURNED_FROM_SCRAP);
-                    return holder;
-                }
-            }
-            //ItemId
-            // find by id
-            if (mAdapter.hasStableIds()) {
-                final int offsetPosition = mAdapterHelper.findPositionOffset(position);
-                if (offsetPosition > 0 && offsetPosition < mAdapter.getItemCount()) {
-                    final long id = mAdapter.getItemId(offsetPosition);
-                    for (int i = 0; i < changedScrapSize; i++) {
-                        final ViewHolder holder = mChangedScrap.get(i);
-                        if (!holder.wasReturnedFromScrap() && holder.getItemId() == id) {
-                            holder.addFlags(ViewHolder.FLAG_RETURNED_FROM_SCRAP);
-                            return holder;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+使用
 
 ```
-
-
-
-### RecyclerView.Recycler#getScrapOrHiddenOrCachedHolderForPosition
-
-```java
-      /**
-         * Returns a view for the position either from attach scrap, hidden children, or cache.
-         *
-         * @param position Item position
-         * @param dryRun   Does a dry run, finds the ViewHolder but does not remove
-         * @return a ViewHolder that can be re-used for this position.
-         */
-        ViewHolder getScrapOrHiddenOrCachedHolderForPosition(int position, boolean dryRun) {
-            final int scrapCount = mAttachedScrap.size();
-
-            // Try first for an exact, non-invalid match from scrap.
-            for (int i = 0; i < scrapCount; i++) {
-                final ViewHolder holder = mAttachedScrap.get(i);
-                if (!holder.wasReturnedFromScrap() && holder.getLayoutPosition() == position
-                        && !holder.isInvalid() && (mState.mInPreLayout || !holder.isRemoved())) {
-                    holder.addFlags(ViewHolder.FLAG_RETURNED_FROM_SCRAP);
-                    return holder;
-                }
-            }
-
-            if (!dryRun) {
-                View view = mChildHelper.findHiddenNonRemovedView(position);
-                if (view != null) {
-                    // This View is good to be used. We just need to unhide, detach and move to the
-                    // scrap list.
-                    final ViewHolder vh = getChildViewHolderInt(view);
-                    mChildHelper.unhide(view);
-                    int layoutIndex = mChildHelper.indexOfChild(view);
-                    if (layoutIndex == RecyclerView.NO_POSITION) {
-                        throw new IllegalStateException("layout index should not be -1 after "
-                                + "unhiding a view:" + vh + exceptionLabel());
-                    }
-                    mChildHelper.detachViewFromParent(layoutIndex);
-                    scrapView(view);
-                    vh.addFlags(ViewHolder.FLAG_RETURNED_FROM_SCRAP
-                            | ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST);
-                    return vh;
-                }
-            }
-
-            // Search in our first-level recycled view cache.
-            final int cacheSize = mCachedViews.size();
-            for (int i = 0; i < cacheSize; i++) {
-                final ViewHolder holder = mCachedViews.get(i);
-                // invalid view holders may be in cache if adapter has stable ids as they can be
-                // retrieved via getScrapOrCachedViewForId
-                if (!holder.isInvalid() && holder.getLayoutPosition() == position
-                        && !holder.isAttachedToTransitionOverlay()) {
-                    if (!dryRun) {
-                        mCachedViews.remove(i);
-                    }
-                    if (DEBUG) {
-                        Log.d(TAG, "getScrapOrHiddenOrCachedHolderForPosition(" + position
-                                + ") found match in cache: " + holder);
-                    }
-                    return holder;
-                }
-            }
-            return null;
-        }
-
+ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelperCallback(mDataItemRVAdapter));
+itemTouchHelper.attachToRecyclerView(id_rv);
 ```
 
-
-
-
-
-## RecyclerView$Adapter#createViewHolder
-
-```java
- /**
-         * This method calls {@link #onCreateViewHolder(ViewGroup, int)} to create a new
-         * {@link ViewHolder} and initializes some private fields to be used by RecyclerView.
-         *
-         * @see #onCreateViewHolder(ViewGroup, int)
-         */
-        @NonNull
-        public final VH createViewHolder(@NonNull ViewGroup parent, int viewType) {
-            try {
-                TraceCompat.beginSection(TRACE_CREATE_VIEW_TAG);
-                //调用抽象方法 RecyclerView.Adapter#onCreateViewHolder
-                final VH holder = onCreateViewHolder(parent, viewType);
-                if (holder.itemView.getParent() != null) {
-                    throw new IllegalStateException("ViewHolder views must not be attached when"
-                            + " created. Ensure that you are not passing 'true' to the attachToRoot"
-                            + " parameter of LayoutInflater.inflate(..., boolean attachToRoot)");
-                }
-                holder.mItemViewType = viewType;
-                return holder;
-            } finally {
-                TraceCompat.endSection();
-            }
-        }
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 缓存复用
-
-1. 从 mChanedScrap 里面查找
-2. 通过 position 从 mAttachedScrap 和隐藏的 View 和 mCachedViews 里面查找
-3. 通过 stableid 从 mAttachedScrap 和隐藏的 View 和 mCachedViews 里面查找
-4. 从用户自定义的复用机制里面查找
-5. 通过 viewtype 从回收缓存池里面查找
-
-
-
-## 缓存回收
-
-1. 通过 viewholder 状态判断是否无效并且是否没移除掉是否没有 stableid ,如果都是就进一步判断，否则根据 viewholder 上次状态来加入 mAttachedViews 还是 mChangedViews 里面
-2. 接着就是判断 mCachedViews 是否满了来判断是否加入 mCachedViews，如果没满就加入 mCachedViews，满了的话就加入到 回收池里面 RecyclerViewPool 。

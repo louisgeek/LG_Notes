@@ -1,15 +1,16 @@
 ArrayList
 
 ```java
-//继承了 AbstractList<E> 
+//继承自 AbstractList<E> 
 //实现了 List<E> 
 //实现了 RandomAccess 接口，支持随机访问
 //实现了 Cloneable 接口,代表可复制的
-//java.io.Serializable 可被序列化
-public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+//实现了 Serializable 可被序列化
+public class ArrayList<E> extends AbstractList<E>
+implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 ```
 
-全局变量
+## 全局变量
 
 ```java
  	/**
@@ -46,7 +47,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     private int size;
 ```
 
-构造函数
+## 构造函数
 
 ```java
    /**
@@ -105,9 +106,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
     }
 ```
 
-
-
-public boolean add(E e)
+## 增
 
 ```java
  /**
@@ -122,59 +121,7 @@ public boolean add(E e)
         elementData[size++] = e;
         return true;
     }
-    
-    private void ensureCapacityInternal(int minCapacity) {
-        //判断是否指向 DEFAULTCAPACITY_EMPTY_ELEMENTDATA ，结合上下文换句话说是否是无参构造出来的
-        if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
-            //10 和 1 比较得到 10
-            minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
-        }
-        ensureExplicitCapacity(minCapacity);
-    }
-    
-     private void ensureExplicitCapacity(int minCapacity) {
-         //AbstractList 里的 protected transient int modCount = 0;
-        modCount++;
-		//容量不够 需要扩容
-        // overflow-conscious code
-        if (minCapacity - elementData.length > 0)
-            grow(minCapacity);
-    }
-    
-        /**
-     * Increases the capacity to ensure that it can hold at least the
-     * number of elements specified by the minimum capacity argument.
-     *
-     * @param minCapacity the desired minimum capacity
-     */
-    private void grow(int minCapacity) {
-        //记录旧的容量
-        // overflow-conscious code
-        int oldCapacity = elementData.length;
-        //假设 oldCapacity = 10
-        //1111 = 1010 + 0101
-        //15 = 10 + 5
-        int newCapacity = oldCapacity + (oldCapacity >> 1);
-        //容量必须 >= minCapacity
-        if (newCapacity - minCapacity < 0)
-            newCapacity = minCapacity;
-        //容量也不能超过 MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8 
-        if (newCapacity - MAX_ARRAY_SIZE > 0)
-            //如果大于 MAX_ARRAY_SIZE 继续处理
-            //判断如果 minCapacity < 0 抛出 OutOfMemoryError 异常
-            //如果 minCapacity > MAX_ARRAY_SIZE 返回 Integer.MAX_VALUE
-            //如果 minCapacity <= MAX_ARRAY_SIZE 返回 MAX_ARRAY_SIZE
-            newCapacity = hugeCapacity(minCapacity);
-        // minCapacity is usually close to size, so this is a win:
-        elementData = Arrays.copyOf(elementData, newCapacity);
-    }
-    
-```
-
-public void add(int index, E element)
-
-```java
-/**
+  /**
      * Inserts the specified element at the specified position in this
      * list. Shifts the element currently at that position (if any) and
      * any subsequent elements to the right (adds one to their indices).
@@ -190,7 +137,7 @@ public void add(int index, E element)
  		//同样也要确认容量
         ensureCapacityInternal(size + 1);  // Increments modCount!!
         //Object src, int srcPos,Object dest, int destPos, int length
-        //源数组 源数组的pos 目标数组 拷贝长度
+        //源数组 源数组的 pos 目标数组 拷贝长度
         //假设 size= 8 index=3    [aa,bb,cc,dd,ee,ff,gg,hh]
         //elementData，3 (dd)，elementData，4，5 (变成了[aa,bb,cc,  ,dd,ee,ff,gg,hh])
         //其实就是通过拷贝把目标索引的值和它后面的所有值往后挪了一位
@@ -199,12 +146,7 @@ public void add(int index, E element)
         //[aa,bb,cc,element,dd,ee,ff,gg,hh]
         elementData[index] = element;
         size++;
-    }
-```
-
-public boolean addAll(Collection<? extends E> c)
-
-```java
+    } 
  /**
      * Appends all of the elements in the specified collection to the end of
      * this list, in the order that they are returned by the
@@ -230,11 +172,6 @@ public boolean addAll(Collection<? extends E> c)
         //如果添加是空集合 返回false
         return numNew != 0;
     }
-```
-
-public boolean addAll(int index, Collection<? extends E> c)
-
-```java
    /**
      * Inserts all of the elements in the specified collection into this
      * list, starting at the specified position.  Shifts the element
@@ -254,7 +191,7 @@ public boolean addAll(int index, Collection<? extends E> c)
         //校验 index
         if (index > size || index < 0)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
-   //集合直接转成数组
+   		//集合直接转成数组
         Object[] a = c.toArray();
         int numNew = a.length;
          //确认容量
@@ -274,6 +211,65 @@ public boolean addAll(int index, Collection<? extends E> c)
     }
 ```
 
+### ArrayList#ensureCapacityInternal
+
+```java
+    private void ensureCapacityInternal(int minCapacity) {
+        //判断是否指向 DEFAULTCAPACITY_EMPTY_ELEMENTDATA ，结合上下文换句话说是否是无参构造出来的
+        if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
+            //10 和 1 比较得到 10
+            minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
+        ensureExplicitCapacity(minCapacity);
+    }
+    
+    
+```
+
+### ArrayList#ensureExplicitCapacity
+
+```java
+ private void ensureExplicitCapacity(int minCapacity) {
+         //AbstractList 里的 protected transient int modCount = 0;
+        modCount++;
+		//容量不够 需要扩容
+        // overflow-conscious code
+        if (minCapacity - elementData.length > 0)
+            grow(minCapacity);
+    }
+```
+
+### ArrayList#grow
+
+```java
+/**
+     * Increases the capacity to ensure that it can hold at least the
+     * number of elements specified by the minimum capacity argument.
+     *
+     * @param minCapacity the desired minimum capacity
+     */
+    private void grow(int minCapacity) {
+        //记录旧的容量
+        // overflow-conscious code
+        int oldCapacity = elementData.length;
+        //假设 oldCapacity = 10
+        //1111 = 1010 + 0101
+        //15 = 10 + 5
+        int newCapacity = oldCapacity + (oldCapacity >> 1);
+        //新的容量必须 >= minCapacity
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        //新的容量也不能超过 MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8 
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            //如果大于 MAX_ARRAY_SIZE 继续处理
+            //判断如果 minCapacity < 0 抛出 OutOfMemoryError 异常
+            //如果 minCapacity > MAX_ARRAY_SIZE 返回 Integer.MAX_VALUE
+            //如果 minCapacity <= MAX_ARRAY_SIZE 返回 MAX_ARRAY_SIZE
+            newCapacity = hugeCapacity(minCapacity);
+        // minCapacity is usually close to size, so this is a win:
+        elementData = Arrays.copyOf(elementData, newCapacity);
+    }
+```
 
 
 
@@ -283,68 +279,24 @@ public boolean addAll(int index, Collection<? extends E> c)
 
 
 
+## 总结
 
+底层是数组实现，初始大小为 10
 
+由于利用数组本身实现增删元素操作比较麻烦，而 ArrayList 的实现恰恰可以看成是对数组操作的一种封装
 
+没有同步逻辑，不能保证线程安全
 
+插入时会判断数组容量是否足够，不够的话会进行扩容,每次扩容的容量是当前的1.5倍
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- 扩容就是新建一个新的数组，然后将老的数据里面的元素复制到新的数组里面(所以增加较慢)
+- 基于数组拷贝实现
 
 
 
 Vector
 
-
-
-
+CopyOnWriteArrayList
 
 synchronizedList
 
