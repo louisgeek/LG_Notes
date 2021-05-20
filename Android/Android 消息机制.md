@@ -1,4 +1,4 @@
-## Handler 简介
+## Handler 
 
 - Android 是基于消息驱动机制运行的
 
@@ -12,48 +12,107 @@ MessageQueue 消息队列，单向链表方式存储消息
 
 Looper 轮询器
 
-## Handler 基本用法
+## 基本用法
+
+### 创建 Handler
 
 ```java
-//@Deprecated Handler 无参构造函数 默认 mLooper = Looper.myLooper(); 这样不够明确
-Handler handler= new Handler() 
-//传入 Looper 
-Handler handler= new Handler(Looper.myLooper()) 
-//传入 Looper 和 callback
-Handler handler= new Handler(Looper.myLooper(), callback)
-//
+//Handler 无参构造函数，内部默认 mLooper = Looper.myLooper(); 这样不够明确，如果子线程调用，而 Looper 此时如果没有初始化，那么就抛异常了
+//@Deprecated
+Handler handler = new Handler();
+//显示传入 Looper 
+Handler handler = new Handler(Looper.myLooper());
+//传入 Looper 和 Handler#Callback
+Handler handler = new Handler(Looper.myLooper(), Handler#Callback);
+//主线程
 Handler uiHandler = new Handler(Looper.getMainLooper());
 ```
-
-```java
-static class MyHandler extends Handler{
-//覆写 handleMessage
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-         //
-        }
-}
-//实例化
-private  MyHandler mMyHandler = new MyHandler();
-```
-
-创建 Message
+### 创建 Message
 
 ```java
 Message msg = new Message();
-//传入 handler 和最下面的一致 有缓存机制，避免重复创建实例对象
+//传入 handler 后和下面写法一致，有缓存机制，避免重复创建实例对象
 Message msg = Message.obtain(handler);
+//内部直接调用 Message.obtain(this);
 Message msg = handler.obtainMessage();
 ```
 
-sendMessage方式发送
+
+
+### 收消息
+
+#### 1 重写 Handler#handleMessage
+
+##### 1.1 静态类
+
+```java
+static class MyHandler extends Handler{
+   	  //构造方法
+      public MyHandler() {
+          //过时
+            super();
+        }
+		//构造方法
+        public MyHandler(@NonNull Looper looper) {
+            super(looper);
+        }
+	//重写 handleMessage
+    @Override
+    public void handleMessage(@NonNull Message msg) {
+        	//内部空方法
+        	super.handleMessage(msg);
+         	//
+    }
+}
+//实例化
+private  MyHandler mMyHandler = new MyHandler(Looper.myLooper());
+```
+
+##### 1.2 匿名类
+
+```java
+Handler handler = new Handler(Looper.myLooper()) {
+    @Override
+    public void handleMessage(@NonNull Message msg) {
+        //内部空方法
+        super.handleMessage(msg);
+        //
+    }
+};
+```
+
+#### 2 实现 Handler#Callback 接口 Callback#handleMessage 方法
+
+- Handler 传入 Callback 接口
+
+```java
+Handler handler= new Handler(Looper.myLooper(),new Handler.Callback() {
+      @Override
+      public boolean handleMessage(@NonNull Message msg) {
+         return false;
+      }
+});
+```
+
+#### 3 Handler#post 传入 Runnable
+
+- 发送的同时通过 Runnable 处理收到的消息，具体说明见下文【发消息 2】
+- 意味着该方法实现收发一体
+
+
+
+### 发消息
+
+#### 1 Handler#sendMessage 方式
 
 ```java
 handler.sendMessage(msg);
 handler.sendMessageDelayed(obtain,time);
 ```
 
-handler.post方式发送
+#### 2 Handler#post 方式
+
+- 不需要准备 Message 实例
 
 ```java
 //handler.post
@@ -68,12 +127,15 @@ public final boolean postDelayed(@NonNull Runnable r, long delayMillis) {
 //Runnable 封装成 Message 的 callback
 private static Message getPostMessage(Runnable r) {
         Message m = Message.obtain();
+    //Message#callback 被赋值，对应上文【收消息 3】
         m.callback = r;
         return m;
 }
 ```
 
-activity.runOnUiThread 里也是调用 handler.post
+#### 3 Activity#runOnUiThread
+
+- 内部也是调用 Handler#post
 
 ```java
  public final void runOnUiThread(Runnable action) {
@@ -87,11 +149,40 @@ activity.runOnUiThread 里也是调用 handler.post
 
 
 
-## Handler 的基本原理
+## 消息分发
+
+```java
+ /**
+     * Handle system messages here.
+     */
+    public void dispatchMessage(@NonNull Message msg) {
+        if (msg.callback != null) {
+       //内部直接调用 message.callback.run(); 所以就是处理上文 Handler#post 之类发送的消息
+       //对应【3 Handler#post 传入 Runnable】
+          handleCallback(msg);
+        } else {
+            //Handler#Callback 接口
+            if (mCallback != null) {
+                //对应【2 实现 Handler#Callback 接口 Callback#handleMessage 方法】
+                if (mCallback.handleMessage(msg)) {
+                    return;
+                }
+            }
+            //对应【1 重写 Handler#handleMessage】
+            handleMessage(msg);
+        }
+    }
+```
+
+- 先处理 Message#callback 的 Runnable ，如果有就直接处理 Runnable 后结束，如果没有就判断有没有 Handler#Callback 接口，如有则判断其返回值，返回是 true 就不继续执行了，返回 false 那么就继续执行 Handler#handleMessage 方法
+
+
+
+## 基本原理
 
 
 ```java
-//ActivityThread 的 main() 方法调用了 Looper.prepareMainLooper()
+//ActivityThread.java 的 main() 方法调用了 Looper.prepareMainLooper()
 public static void main(String[] args){
 
 //UI 线程默认已经调用以下方法创建了 Looper 对象，是系统自动调用的
@@ -106,23 +197,37 @@ throw new RuntimeException("Main thread loop unexpectedly exited");
 
 ### 先看 Looper 的 prepareMainLooper 方法
 
-prepareMainLooper 里直接调用了 prepare(false);
-
 ```java
- public static void prepare() {
+static final ThreadLocal<Looper> sThreadLocal = new ThreadLocal<Looper>();
+private static Looper sMainLooper;
+//系统自动调用，不需要主动调用
+@Deprecated
+public static void prepareMainLooper() {
+    	//直接调用了 prepare(false);
+        prepare(false);
+        synchronized (Looper.class) {
+            if (sMainLooper != null) {
+                throw new IllegalStateException("The main Looper has already been prepared.");
+            }
+            sMainLooper = myLooper();
+        }
+}
+public static void prepare() {
   //无参方法传入true,默认允许退出
   prepare(true);
 }
 // prepare(false)，所以主线程传入的 false 是不允许退出的
 private static void prepare(boolean quitAllowed) {
     if (sThreadLocal.get() != null) {
-        //知识点：每个线程只能创建一个 Looper
+        //知识点：每个线程只能创建一个 Looper，再次调用 prepare 就会抛出异常
         throw new RuntimeException("Only one Looper may be created per thread");
     }
     //实例化一个 Looper 存入 ThreadLocal
     sThreadLocal.set(new Looper(quitAllowed));
 }
 ```
+
+- prepare 在一个线程内只能调用一次，通过 sThreadLocal 判断
 
 --> new Looper(quitAllowed)
 
@@ -369,4 +474,10 @@ Looper 阻塞 - 主线程也阻塞- **ActivityThread**  main函数也阻塞，�
 
 
 ## glide
+
+
+
+为啥 Message 消息对象持有构造它的 Handler 对象？
+
+
 

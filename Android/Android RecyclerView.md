@@ -1,3 +1,21 @@
+简介
+
+
+
+特点
+
+- 原生支持列表、网格、瀑布流等布局
+- 分割线 ItemDecoration，较灵活
+- 自带 ViewHolder 机制
+- 自带 Item 动画
+- 自带局部刷新
+- 自带拖拽、侧滑接口
+- 未实现头尾视图、空视图和 Item 点击事件
+- 改进了缓存机制，有四级缓存
+- 可扩展性强
+
+
+
 ## RecyclerView 常规使用
 
 ### DataItem.java
@@ -89,6 +107,8 @@ public class DataItem {
 
 
 ### DataItemViewHolder.java
+
+- 也可以放在 Adapter 里，作为静态内部类
 
 ```java
 public class DataItemViewHolder extends RecyclerView.ViewHolder {
@@ -222,9 +242,10 @@ public class MainActivity extends AppCompatActivity {
         initData();
         //
         RecyclerView id_rv = findViewById(R.id.id_rv);
-        id_rv.setLayoutManager(new LinearLayoutManager(this));
+   		LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        id_rv.setLayoutManager(linearLayoutManager);
         id_rv.setItemAnimator(new DefaultItemAnimator());
-        mDataItemRVAdapter = new DataItemRVAdapter();
+        id_rv.addItemDecoration(new DividerItemDecoration(this, 					linearLayoutManager.getOrientation()));
         //初始化
         id_rv.setAdapter(mDataItemRVAdapter);
         mDataItemRVAdapter.setDataItemList(mDataItemList);
@@ -297,7 +318,11 @@ mAdapter.notifyItemRangeRemoved(int positionStart, int itemCount)
 mAdapter.notifyItemMoved(int fromPosition, int toPosition)
 ```
 
+- PS: 点击一个 Item 的删除按钮进行数据删除 notifyItemRemoved ，如果采用事件监听时会传 position 给点击事件接口方法，此时不能直接写 position，应为它其实变成了  final 类型 （注意如果是 java 代码，在 AS 里显示下划线），这样就造成错乱了，需要直接写 holder.getBindingAdapterPosition (其实这里 holder 变成 final 了) ，这样才能保证点下一个删除按钮时候的 pos 是正确的，notifyItemInserted 也是类似
 
+- 还有一种解决方案，就是删除或新增后用 mAdapter.notifyItemRangeChanged(pos, mAdapter.getData().size() - pos) 强行处理一波，及时刷新 pos ，让 pos 能够正确
+
+  
 
 ### 3 局部刷新 View 刷新
 
@@ -364,9 +389,135 @@ mAdapter.notifyItemRangeChanged(int positionStart, int itemCount,Object payload)
 
 
 
+
+
+## LayoutManager
+
+- LinearLayoutManager
+- GridLayoutManager
+- 
+
+
+
+## ItemDecoration
+
+- 继承 RecyclerView.ItemDecoration 实现
+- 系统自带一个 DividerItemDecoration 可以直接用
+- 通过覆写 getItemOffsets 方法指定 item 的宽度，也可以直接给 item 设置 margin 变相实现
+- ItemDecoration 在 RecyclerView 的 Item 绘制之前绘制
+
+
+
+## ItemAnimator
+
+- 系统自带一个 DefaultItemAnimator
+
+
+
+## HeaderView FooterView
+
+```java
+/**
+ * Created by louisgeek on 2021/4/28.
+ * Decorator 装饰模式
+ */
+public class AdapterWrapper extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private RecyclerView.Adapter<RecyclerView.ViewHolder> mAdapter;
+    private View mHeaderView;
+    private View mFooterView;
+    private static final int HEADER = 0;
+    private static final int NORMAL = 1;
+    private static final int FOOTER = 2;
+
+    public AdapterWrapper(RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
+        mAdapter = adapter;
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == HEADER) {
+            //无需 inflate，直接返回
+            return new RecyclerView.ViewHolder(mHeaderView) {
+            };
+        } else if (viewType == FOOTER) {
+            //无需 inflate，直接返回
+            return new RecyclerView.ViewHolder(mFooterView) {
+            };
+        }
+        return mAdapter.onCreateViewHolder(parent, viewType);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (position == 0) {
+            //第一个头
+            //无需绑定操作
+        } else if (position == this.getItemCount() - 1) {
+            //最后一个尾
+            //无需绑定操作
+        } else {
+            //第二个索引才是原来 NORMAL 列表的的第一个
+            int realPosition = position - 1;
+            mAdapter.onBindViewHolder(holder, realPosition);
+        }
+    }
+
+    @Override
+    public int getItemCount() {
+        //多了头尾
+        return mAdapter.getItemCount() + 2;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (position == 0) {
+            //第一个头
+            return HEADER;
+        } else if (position == this.getItemCount() - 1) {
+            //最后一个尾
+            return FOOTER;
+        } else {
+            return NORMAL;
+        }
+    }
+
+    public void addHeaderView(View view) {
+        this.mHeaderView = view;
+    }
+
+    public void addFooterView(View view) {
+        this.mFooterView = view;
+    }
+}
+```
+- 利用装饰模式，减少代码侵入
+
+```java
+     mDataItemRVAdapter = new DataItemRVAdapter();
+     //新增
+     AdapterWrapper adapterWrapper = new AdapterWrapper(mDataItemRVAdapter);
+	 adapterRecyclerViewAdapter.addHeaderView(mHeader);
+ 	 adapterRecyclerViewAdapter.addFooterView(mFooter);
+      //修改 setAdapter
+	//id_rv.setAdapter(mDataItemRVAdapter);
+    id_rv.setAdapter(adapterWrapper);
+```
+
+
+
+
+
+
+
 ## 使用 DiffUtil 刷新数据
 
- 
+- 通过计算得出新旧数据集的最小变化量
+
+- DiffUtil#calculateDiff 推荐在子线程执行
+
+
 
 ### 1 局部刷新 Item 刷新
 
@@ -448,9 +599,9 @@ private void refreshDataByDiffUtil() {
         mDataItemList.set(2, newDataItem);
         //2 更新 Adapter 数据源
         mDataItemRVAdapter.setDataItemList(mDataItemList);
-        //3 DiffUtil 方式通知刷新
+        //3 DiffUtil 方式通知刷新，推荐在子线程中计算
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffCallback(oldDataItemList, mDataItemList));
-        //内部最终就是调用 Adapter#notifyItemXXX 系列方法实现的
+        //内部按不同情况自动调用 Adapter#notifyItemXXX  方法实现的
         diffResult.dispatchUpdatesTo(mDataItemRVAdapter);
 }
 ```
@@ -515,7 +666,7 @@ private void refreshDataByDiffUtil() {
 
 
 
-## 使用 ItemTouchHelper 实现拖拽侧滑
+## ItemTouchHelper 实现拖拽侧滑
 
 ### 创建 ItemTouchHelperCallback
 
@@ -683,4 +834,59 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelperCallback(mDataItemRVAdapter));
 itemTouchHelper.attachToRecyclerView(id_rv);
 ```
+
+
+
+
+
+ConcatAdapter（原 MergeAdapter）
+
+
+
+## ViewHolder#getLayoutPosition、ViewHolder#getBindingAdapterPosition、ViewHolder#getAbsoluteAdapterPosition
+
+```java
+//@Deprecated 本意就是 getLayoutPosition，由于命名太不明确，标记过时了
+androidx.recyclerview.widget.RecyclerView.ViewHolder#getPosition
+androidx.recyclerview.widget.RecyclerView.ViewHolder#getLayoutPosition
+//@Deprecated 本意就是 getBindingAdapterPosition 
+androidx.recyclerview.widget.RecyclerView.ViewHolder#getAdapterPosition
+androidx.recyclerview.widget.RecyclerView.ViewHolder#getBindingAdapterPosition
+//int globalPosition = mOwnerRecyclerView.getAdapterPositionInRecyclerView(this);
+androidx.recyclerview.widget.RecyclerView.ViewHolder#getAbsoluteAdapterPosition
+```
+
+所以只需要考虑 getLayoutPosition、getBindingAdapterPosition、getAbsoluteAdapterPosition
+
+1 正常情况下 LayoutPosition 和 BindingAdapterPosition (原 AdapterPosition) 的 position 是相等的，当 Adapter 设置完新数据，并且调用了 notifyXXX 方法后，RecyclerView 需要重新布局（不超过16ms），在没有完成新布局之前，LayoutPosition 和 AdapterPosition 可能就会出现不相等的情况 了
+
+2 没有使用 ConcatAdapter，那么 getBindingAdapterPosition 和 getAbsoluteAdapterPosition 方法的效果是一样的，使用了ConcatAdapter，getBindingAdapterPosition 得到的是元素位于当前绑定 Adapter 的位置，而getAbsoluteAdapterPosition 方法得到的是元素位于合并后 Adapter 的全局绝对位置
+
+- getBindingAdapterPosition 返回相对于其所绑定的 Adapter 的位置
+
+- getAbsoluteAdapterPosition 返回相对于整个 RecyclerView 的位置
+
+3 调用的是 notifyDataSetChanged，因为要重新绘制所有 Item，而且在绘制完成之前 RecyclerView 是不知道 AdapterPosition 的，所以此时会返回-1（NO_POSITION），但是调用 notifyItemInserted  这样的 AdapterPosition 会立马变更生效
+
+总结：
+
+大多数情况下用 AdapterPosition 进行获取，最好先用 RecyclerView.NO_POSITION 作判断再使用
+
+侧滑删除时，可考虑选用 LayoutPosition ，肉眼可见的情况，还有 mRecyclerView.findViewHolderForLayoutPosition(myViewHolder.getLayoutPosition() - 1)
+
+另外如果再 onBindViewHolder 处理事件相关，推荐用 AdapterPosition 替换 onBindViewHolder 方法的 position 参数
+
+
+
+
+
+
+
+
+
+
+
+## 闪屏问题
+
+在rv.setAdapter()之前调用((SimpleItemAnimator)rv.getItemAnimator()).setSupportsChangeAnimations(false)禁用change动画
 

@@ -2,7 +2,7 @@
 
 # Activity#setContentView
 
-- Activity 创建于 ActivityThread#performLaunchActivity 方法
+- Activity 创建于 ActivityThread#performLaunchActivity 方法,会调用 Activity#attach 方法
 
 ```java
 public class Activity extends ContextThemeWrapper
@@ -12,7 +12,7 @@ public class Activity extends ContextThemeWrapper
         Window.OnWindowDismissedCallback,
         AutofillManager.AutofillClient, ContentCaptureManager.ContentCaptureClient {
             
-	//每一个 Activity 都包含一个 Window 对象，而下文会提到 PhoneWindow 是 Window 抽象类的具体继承实现类
+	//每个 Activity 都包含一个 Window 对象，而下文会提到 PhoneWindow 是 Window 抽象类的具体继承实现类
 	private Window mWindow;
 
 	public void setContentView(@LayoutRes int layoutResID) {
@@ -309,7 +309,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 }
 ```
 
-- 代码中显示了为什么 Activity#requestWidowFeature 需要在 setContentView 之前调用
+- 代码中显示了为什么 Activity#requestWindowFeature 需要在 setContentView 之前调用
 - mContentParent 里的子 View 就是 setContentView 时候传入的
 
 1 创建 DecorView ，mDecor = generateDecor(-1)  
@@ -355,7 +355,7 @@ protected DecorView generateDecor(int featureId) {
 
 - 将要显示的具体内容呈现在 PhoneWindow 上
 - 继承自 FrameLayout，就是对 FrameLayout 进行功能的修饰
-- 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent，是 Android 最基本的窗口系统
+- 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent view ，是 Android 最基本的窗口系统
 
 ```java
 public class DecorView extends FrameLayout implements RootViewSurfaceTaker, WindowCallbacks {
@@ -720,7 +720,7 @@ void onResourcesLoaded(LayoutInflater inflater, int layoutResource) {
 
 
 
-总结
+## 总结
 
 - Window 是一个抽象类，提供了一系列绘制窗口的方法
 - 一个 Activity 对象对应一个 Window 对象
@@ -728,13 +728,13 @@ void onResourcesLoaded(LayoutInflater inflater, int layoutResource) {
 - setContentView 实际是交给 PhoneWindow#setContentView 来处理逻辑
 - PhoneWindow 是 Window 的唯一具体继承实现类，所以 Window 是 Activity 和 View 关联的桥梁
 - PhoneWindow 对象在 Activity 启动后的 attach() 方法中被初始化创建，在 onCreate 方法之前
-- PhoneWindow 对象内部 mDectorView 对象，是 Acitivty 界面的 root view 
+- PhoneWindow 对象内部 mDectorView 对象，是 Acitivty 界面的根 view 
 - mContentParent 里的子 View 就是 setContentView 时候传入的
 - PhoneWindow#installDecor 方法中显示了为什么 Activity#requestWidowFeature 需要在 setContentView 之前调用
 
 
 
-流程
+## 流程
 
 Activity#setContentView
 
@@ -750,15 +750,37 @@ PhoneWindow#setContentView
 
  
 
-视图层级
+## 视图层级
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/2021032322270172.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xvdWlzZ2Vlaw==,size_16,color_FFFFFF,t_70#pic_center)
 
- mPhoneWindow -> mDectorView -> mContentRoot -> mContentParent ->  Custom LayoutView
+ Activity -> mPhoneWindow -> mDectorView -> mContentRoot -> mContentParent ->  Custom Layout View
 
 
 
+- screen_simple.xml
 
+```xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+    <ViewStub android:id="@+id/action_mode_bar_stub"
+              android:inflatedId="@+id/action_mode_bar"
+              android:layout="@layout/action_mode_bar"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:theme="?attr/actionBarTheme" />
+    <FrameLayout
+         android:id="@android:id/content"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:foregroundInsidePadding="false"
+         android:foregroundGravity="fill_horizontal|top"
+         android:foreground="?android:attr/windowContentOverlay" />
+</LinearLayout>
+```
 
 
 

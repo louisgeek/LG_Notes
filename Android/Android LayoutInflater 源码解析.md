@@ -2,7 +2,7 @@
 
 ## LayoutInflater 简介
 
-- android.view.LayoutInflater （Inflater 充气者）
+- android.view.LayoutInflater （Inflater 充气者，把布局 xml 膨胀成 View 树）
 - 布局解析器，把 xml 布局文件解析后动态生成 View
 - 是一个抽象类
 - 是一个系统服务，服务名称 Context.LAYOUT_INFLATER_SERVICE = "layout_inflater"
@@ -77,7 +77,7 @@ public static View inflate(Context context, @LayoutRes int resource, ViewGroup r
 ```
 
 - 其实就是调用了 LayoutInflater.from(context).inflate(resource, root) 方法
-- 解析布局生成 View 加入 ViewGroup 里面
+- 解析布局生成 View 后将其加入 ViewGroup 里面
 
 ##### View.inflate 方式的注意事项
 
