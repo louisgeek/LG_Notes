@@ -1,5 +1,9 @@
 # 10000 小时定律 NO Pain，No Gain！
 
+
+
+
+
 # Android
 
 ## 消息机制

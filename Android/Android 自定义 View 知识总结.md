@@ -32,7 +32,6 @@
 
 - 颜色模式
    >  ARGB8888 、ARGB4444 、RGB565 (安卓默认模式) 、Alpha8 
-    >
 
 ## 自定义 View 的基本流程
 
@@ -160,6 +159,8 @@ protected void measureChild(View child, int parentWidthMeasureSpec,
 ### onSizeChanged(int w, int h, int oldw, int oldh)
 
 - 确定 View 大小，既然上面已经测量过 View 的大小了，那为啥还要确定一次？因为 measure 测量是 View 自己的大小，而 View 能展现的大小还受父控件的影响
+
+
 
 ## View  layout 流程
 
