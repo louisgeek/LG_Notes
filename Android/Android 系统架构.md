@@ -70,3 +70,7 @@ Android 系统核心服务基于 Linux 内核
 
 如 Email、Camera、Brower 等
 
+
+
+
+![Android 系统架构](https://gitee.com/louisgeek/LG_Notes/raw/master/images/android_xitongjiagou.png)
