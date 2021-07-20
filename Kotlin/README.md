@@ -6,7 +6,7 @@
 
 - 代码复用性高
 
-- 支持函数式编程
+- 拥有高级语法特性，支持函数式编程
 
 - 可以编译后运行在不同的环境
 
@@ -14,15 +14,19 @@
 
 - 强类型的，支持隐式类型的显式类型语言（类型推断形式实现支持）
 
-- 兼容 Java，支持与 Java 互相操作
+- 100% 兼容 Java，支持与 Java 互相操作
 
 - 一切都是对象，没有基础类型，变量也都是引用类型
 
-- Type inference 类型推断 
+- Type inference 类型推断
 
 - Null safety 空安全
 
   
+
+### 为什么 Kotlin 能够开发 Android 应用呢？
+
+首先我们知道 Java 属于解释型语言，Java 代码先被编译成 class 文件，再通过 Java 虚拟机解释成计算机可直接识别的二进制数据后执行，于是这里就引出 Java 虚拟机并不是直接和 Java 代码打交道的，倘若开发一门新语言和新编译器，新编译器能够将这门新语言编译成同种规格的 class 文件，再交由 Java 虚拟机解释运行的话，那这样就可以实现不依赖 Java 语言来开发程序了，而 Kotlin 工作原理就是利用了这种机制，所以 Kotlin 不仅仅能开发 Android 应用，理论上说 Java 能做到的它都能做到
 
 
 
@@ -32,17 +36,27 @@ Read Eval Print Loop 命令行环境
 
 
 
+### 面向对象编程的最基本思想
+
+类与对象：可以创建一类事物，通过对类的封装，在适当的时候可以创建这些类的实例
+
 ### var、val
 
-可变的变量，不可变的变量
+variable 可变的变量
 
-写代码时候首选 val
+value 不可变的变量，写代码时候首选 val
+
+ps: val 对应 java final 修饰的变量，var 对应 java 非 final 修饰的变量
 
 
 
 ### 类型推断
 
-Int 赋值到 Long 需要显示调用 toLong 
+var d = 1
+
+Int 赋值到 Long 需要显示调用 toLong
+
+
 
 
 
@@ -73,6 +87,16 @@ $XXX  ${XXX.some}
 
 
 
+### 区间
+
+```kotlin
+val range = 0..10  //[0,10] 双闭区间
+val range = 0 until 10  //[0,10) 左闭右开区间
+val range = 10 downTo 0  //降序区间
+```
+
+
+
 ### 流程控制语句
 
 #### if
@@ -87,7 +111,7 @@ val c = if (a>b) a else b
 
 if 作为代码块，最后一行就是它的返回值
 
-
+也可以直接在 return 后面跟 if ，省略中间变量
 
 #### when
 
@@ -114,9 +138,17 @@ else -> print("qqq")
 }
 ```
 
+- 还有一种不带参数的 when
+
 
 
 #### for
+
+```
+for(po in 0..10){
+	print(po)
+}
+```
 
 ```kotlin
 for(x in xList){
