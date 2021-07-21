@@ -172,6 +172,8 @@ DiskLruCache
 
 
 
+## 总结
+
 
 
 #### Request 和 Call 的区别？
@@ -195,7 +197,11 @@ DiskLruCache
 
 
 
+
+
 #### OKHttp 和 HttpUrlConnection 的关系?
+
+
 
 
 
@@ -204,6 +210,8 @@ DiskLruCache
 #### StreamAllocation 为什么在除自定义拦截器以外第一个拦截器中就进行创建？
 
 便于取消请求以及出错释放资源
+
+
 
 
 
@@ -219,9 +227,11 @@ DiskLruCache
 
 
 
+
+
 #### 其他一些涉及到的设计模式？
 
 单例模式：线程池
 观察者模式：各种回调监听
-外观模式：OkHttpClient 封装了很对类对象
+外观模式：OkHttpClient 封装了很多类对象
 工厂模式：Socket 的生产

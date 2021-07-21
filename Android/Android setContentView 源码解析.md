@@ -54,15 +54,17 @@ public class Activity extends ContextThemeWrapper
 }
 ```
 
-- Window 是一个抽象类，提供了一系列绘制窗口的方法
+- Activity  负责容器的生命周期及活动，包含一个 Window，一个 Activity 对象对应一个 Window 对象
 
-- 一个 Activity 对象对应一个 Window 对象
+- Window 是一个抽象类，负责窗口管理，提供了一系列绘制窗口的方法
 
-- 实际是交给 PhoneWindow#setContentView 来处理逻辑
+- Window 是 Activity 和 View 交互的桥梁，PhoneWindow 是 Window 的唯一具体继承实现类
 
-- PhoneWindow 是 Window 的唯一具体继承实现类，Window 是 Activity 和 View 交互的桥梁
+- Activity#setContentView 实际是通过 PhoneWindow#setContentView 来处理逻辑的
 
-- PhoneWindow 对象在 Activity 的 attach() 方法中被初始化创建
+- PhoneWindow 对象在 Activity#attach 方法中被初始化创建，在 onCreate 方法之前
+
+- Activity 的展示界面的特性是通过 Window 对象来处理的
 
   
 
@@ -353,8 +355,8 @@ protected DecorView generateDecor(int featureId) {
 
 ##### DecorView
 
-- 将要显示的具体内容呈现在 PhoneWindow 上
-- 继承自 FrameLayout，就是对 FrameLayout 进行功能的修饰
+- DecorView 将要显示的具体内容呈现在 PhoneWindow 上
+- DecorView 继承自 FrameLayout，就是对 FrameLayout 进行了功能的修饰
 - 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent view ，是 Android 最基本的窗口系统
 
 ```java
@@ -720,17 +722,27 @@ void onResourcesLoaded(LayoutInflater inflater, int layoutResource) {
 
 
 
+
+
+
+
 ## 总结
 
-- Window 是一个抽象类，提供了一系列绘制窗口的方法
-- 一个 Activity 对象对应一个 Window 对象
+- Activity  负责容器的生命周期及活动，包含一个 Window，一个 Activity 对象对应一个 Window 对象
+- Window 是一个抽象类，负责窗口管理，提供了一系列绘制窗口的方法
+- Window 是 Activity 和 View 交互的桥梁，PhoneWindow 是 Window 的唯一具体继承实现类
+- Activity#setContentView 实际是交给 PhoneWindow#setContentView 来处理逻辑
+- PhoneWindow 对象在 Activity#attach 方法中被初始化创建，在 onCreate 方法之前
 - Activity 的展示界面的特性是通过 Window 对象来处理的
-- setContentView 实际是交给 PhoneWindow#setContentView 来处理逻辑
-- PhoneWindow 是 Window 的唯一具体继承实现类，所以 Window 是 Activity 和 View 关联的桥梁
-- PhoneWindow 对象在 Activity 启动后的 attach() 方法中被初始化创建，在 onCreate 方法之前
-- PhoneWindow 对象内部 mDectorView 对象，是 Acitivty 界面的根 view 
+- DecorView 将要显示的具体内容呈现在 PhoneWindow 上
+- DecorView 继承自 FrameLayout，就是对 FrameLayout 进行了功能的修饰
+- 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent view ，是 Android 最基本的窗口系统
 - mContentParent 里的子 View 就是 setContentView 时候传入的
 - PhoneWindow#installDecor 方法中显示了为什么 Activity#requestWidowFeature 需要在 setContentView 之前调用
+
+
+
+
 
 
 
@@ -781,6 +793,22 @@ PhoneWindow#setContentView
          android:foreground="?android:attr/windowContentOverlay" />
 </LinearLayout>
 ```
+
+
+
+## 思考
+
+可以应用到实现各大银行 APP 的小助手（客服）悬浮按钮
+
+- 不需要大动干戈采用系统全局悬浮窗
+- 类似 MIUI 系统还需要去权限里启用允许显示悬浮窗（拼多多的直播小窗目前需要）
+- 在上文提到的 mContentParent 层级动态加入悬浮按钮
+- 多 Activity 共享，单例 View，做到只创建一个 View，页面切换时只做添加与移除
+- 考虑 ActivityLifecycleCallbacks 进行监听 Activity 的生命周期,onStart 时添加，onStop 时移除
+- 注意按需使用弱引用来防止内存泄漏
+- 需要实现拖拽，自动吸附到屏幕边缘的功能
+
+
 
 
 
