@@ -105,7 +105,7 @@ ZygoteInit#handleChildProc 调用了 ZygoteInit#zygoteInit
 
 
 
-为啥不采用 Binder 机制进行 IPC 通信
+为啥不采用 Binder 机制进行 IPC 通信？
 
 
 
@@ -119,9 +119,9 @@ Zygote 进程
 - init 进程启动时创建了 Zygote 进程
 - Zygote 进程启动时会创建 ART（Dalvik）
 - 通过 AndroidRuntime.cpp#start 函数启动 Zygote 进程(ZygoteInit)
-- 创建 Java 虚拟机，并为 Java 虚拟机注册 JNI 方法
+- 创建 Java 虚拟机，并为 Java 虚拟机注册 JNI 方法（Java Rumtime 被加载到进程中并注册一系列 Android 核心类的 JNI）
 - 通过 JNI 调用 ZygoteInit#main 方法，ZygoteInit#main 是 Java 框架层面的入口
 - 利用 registerServerSocket 创建 Server Socket ，runSelectLoop 等待 AMS 请求，预加载类和资源
-- 并按需利用 fork 自身创建应用程序进程和 SystemServer 进程
+- 并按需利用 fork 自身创建应用程序进程和 SystemServer 进程（而通过 fork 都会将 Zygote 里的虚拟机实例复制到新的 App进程 里面去，从而使每个 App进程 都有一个独立的虚拟机实例，而且会和 Zygote 进程一起共享 Java Rumtime，也就是可以将 XposedBridge.jar 这个Jar加载到每个App进程 中去）
 - ps：ZygoteInit#main 间接调用了 ActivityThread#main
 
