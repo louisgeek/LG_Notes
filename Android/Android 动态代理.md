@@ -72,7 +72,11 @@ public class ProxyTest {
 
 
 
-Java 动态代理
+### JDK 动态代理
+
+- 使用 Proxy#newInstance 来创建指定接口的代理实现类
+
+- 通过`Proxy.newProxyInstance`产生的代理类，当调用接口的任何方法时，都会调用`InvocationHandler#invoke`方法，在这个方法中可以拿到传入的参数，注解等
 
 - 只能实现基于接口的动态代理，因为 Java 时单继承的，它动态生成 $ProxyX 代理类已经继承 Proxy 类了
 
@@ -103,4 +107,8 @@ Toast toastProxy2 = (Toast) Proxy.newProxyInstance(Toast.class.getClassLoader(),
 
 
 
+
+
+
+### GCLIB
 
