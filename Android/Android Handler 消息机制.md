@@ -356,6 +356,8 @@ Handler.dispatchMessage(Message msg)
 
 
 
+
+
 ## Handler 的同步屏障机制
 
 

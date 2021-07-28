@@ -1,12 +1,30 @@
 
 
-## 流程
+## 事件分发
 
-四个重点方法
-dispatchTouchEvent
-onInterceptTouchEvent
+- 责任链模式
+
+四个重要方法
+dispatchTouchEvent 事件分发
+onInterceptTouchEvent 事件拦截(ViewGroup 才有)
 dispatchTransformedTouchEvent
-onTouchEvent
+onTouchEvent 事件消费
+
+
+
+ViewGroup
+
+- 包含子 View，侧重是否需要拦截事件，是否需要把事件继续分发给子 View，如果把事件分发给子 View
+
+  
+
+
+
+View
+
+- 侧重如何去处理事件
+
+
 
 
 
@@ -54,6 +72,8 @@ onTouchEvent
     }
 ```
 
+
+
 ### Window
 
 ```java
@@ -76,6 +96,8 @@ onTouchEvent
     }
 ```
 
+
+
 ### PhoneWindow#superDispatchTouchEvent
 
 ```java
@@ -86,6 +108,8 @@ onTouchEvent
     }
 ```
 
+
+
 ### DecorView#superDispatchTouchEvent
 
 ```java
@@ -94,6 +118,8 @@ public boolean superDispatchTouchEvent(MotionEvent event) {
      return super.dispatchTouchEvent(event);
 }
 ```
+
+
 
 ### ViewGroup
 
@@ -404,6 +430,8 @@ public boolean superDispatchTouchEvent(MotionEvent event) {
     }
 
 ```
+
+
 
 ### View
 
@@ -782,32 +810,6 @@ Activity#dispatchTouchEvent
 ## 滑动冲突
 
 - 通过调用`父View`的`requestDisallowInterceptTouchEvent`来解决滑动冲突
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
