@@ -554,11 +554,15 @@ registerService(Context.WINDOW_SERVICE, WindowManager.class,
 
 MotionEvent 事件产生后，按照 Activity ->  Window -> DectorView -> View 顺序传递的过程就叫事件分发
 
+
+
 #### dispatchTouchEvent
 
 分发事件
 
+ViewGroup#dispatchTouchEvent
 
+- 判断是否需要拦截事件
 
 #### onInterceptTouchEvent (只有 ViewGroup 有)
 

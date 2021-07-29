@@ -8,12 +8,6 @@ https://greenrobot.org/eventbus
 
 
 
-
-
-
-
-
-
 基于**发布/订阅事件**总线框架，基于观察者模式 
 
 
@@ -63,7 +57,7 @@ public @interface Subscribe {
 EventBus.getDefault().register(this);
 ```
 
-0 EventBus#getDefault()
+## EventBus#getDefault()
 
 ```java
 //volatile
@@ -86,7 +80,7 @@ public static EventBus getDefault() {
 
 
 
-## 1EventBus#register(this)
+## EventBus#register(this)
 
 //this 通常传入 Activity 实例，如 MainActivity.this
 
@@ -106,7 +100,7 @@ public void register(Object subscriber) {
     }
 ```
 
-SubscriberMethod 类
+### SubscriberMethod 类
 
 ```
 public class SubscriberMethod {
@@ -121,7 +115,7 @@ public class SubscriberMethod {
     }
 ```
 
-### 1.1SubscriberMethodFinder#findSubscriberMethods()
+### SubscriberMethodFinder#findSubscriberMethods()
 
 SubscriberMethodFinder 类 ，在 EventBus 实例化的时候创建
 
@@ -154,7 +148,7 @@ Map<Class<?>, List<SubscriberMethod>> METHOD_CACHE = new ConcurrentHashMap<>();
     ……
 ```
 
-subscriberMethodFinder.findUsingInfo(Class<?> subscriberClass)
+#### subscriberMethodFinder.findUsingInfo(Class<?> subscriberClass)
 
 ```java
     private List<SubscriberMethod> findUsingInfo(Class<?> subscriberClass) {
@@ -187,7 +181,7 @@ subscriberMethodFinder.findUsingInfo(Class<?> subscriberClass)
     }
 ```
 
-subscriberMethodFinder.getSubscriberInfo(FindState findState)
+#### subscriberMethodFinder.getSubscriberInfo(FindState findState)
 
 ```java
  private SubscriberInfo getSubscriberInfo(FindState findState) {
@@ -209,7 +203,7 @@ subscriberMethodFinder.getSubscriberInfo(FindState findState)
     }
 ```
 
-subscriberMethodFinder.getMethodsAndRelease(FindState findState)
+#### subscriberMethodFinder.getMethodsAndRelease(FindState findState)
 
 ```java
  private List<SubscriberMethod> getMethodsAndRelease(FindState findState) {
@@ -230,7 +224,7 @@ subscriberMethodFinder.getMethodsAndRelease(FindState findState)
     }
 ```
 
-### 1.2EventBus#subscribe(Object subscriber, SubscriberMethod subscriberMethod)
+### EventBus#subscribe(Object subscriber, SubscriberMethod subscriberMethod)
 
 ```java
 private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {

@@ -129,7 +129,7 @@ Activity#onCreate
 
 ### 总结
 
-Launcher <- Binder-> AMS 点击APP图标，请求 AMS 创建根 Activity
+Launcher <- Binder-> AMS 点击 APP 图标，请求 AMS 创建 APP 根 Activity
 
 AMS -> Zygote -> ApplicationThread AMS 请求 Zygote 创建应用程序进程，Zygote 创建并启动应用程序进程
 
