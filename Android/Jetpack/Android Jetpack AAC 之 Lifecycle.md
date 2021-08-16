@@ -3,7 +3,7 @@
 ## Lifecycle
 
 - Lifecycle 组件主要是解决了 2 个问题
-  不让生命周期函数中写大量管理的组件代码，反过来，让组件自己去感知去管理，减少 Activity/Fragment 中代码，按组件更易于管理
+  不让生命周期函数中写大量管理的组件代码，反过来，让组件自己去感知去管理，减少 Activity/Fragment 中代码，按组件划分更易于管理
   无法保证 Activity/Fragment 停止后不继续执行启动，通过 Lifecycle 得到的状态来进行先判断再执行逻辑，能够规避该问题
 - 如果是 MVP 架构，那么 Presenter 可以实现 LifecycleObserver，就不需要生命周期函数主动调用了
 - 是一个接口
@@ -70,4 +70,6 @@
 
 
 ## androidx.lifecycle.ReportFragment
+
+- 专门用于分发生命周期事件的 Fragment
 
