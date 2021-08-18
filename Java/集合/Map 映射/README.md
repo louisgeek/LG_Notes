@@ -40,5 +40,3 @@ ConcurrentHashMap
 |      |         |               |         |           |
 
 
-
-HashMap 和 Hashtable 的区别

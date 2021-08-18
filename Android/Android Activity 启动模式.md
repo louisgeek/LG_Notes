@@ -28,13 +28,13 @@
 
 - singleTop 栈顶复用模式
 
-  如果待启动 Activity 已经位于源 Activity 所属的任务栈的栈顶时，不会创建新的 Activity 实例，而是直接使用栈顶的 Activity 实例，并回调其 `onNewIntent()`方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，否则就在栈顶创建一个新的 Activity  实例
+  如果待启动 Activity 已经位于源 Activity 所属的任务栈的栈顶时，则不会创建新的 Activity 实例，而是直接使用栈顶的 Activity 实例，并回调其 `onNewIntent()`方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，否则就在栈顶创建一个新的 Activity  实例
 
   - 推送点击消息界面
 
 - singleTask 栈内复用模式
 
-  如果另外的任务栈中已存在待启动 Activity 的实例，则不会创建新的 Activity 实例，而是直接使用栈内的 Activity 实例，并回调其 `onNewIntent()` 方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，同时清空任务栈里该 Activity 实例上所有的 Activity 实例，Activity 一次只能有一个实例存在
+  如果另外的任务栈中已存在待启动 Activity 的实例，则不会创建新的 Activity 实例，而是直接使用栈内的 Activity 实例，并回调其 `onNewIntent()` 方法，`onCreate()` 和 `onStart()`不会被调用，直接调 `onResume()` ，同时清空任务栈里该 Activity 实例上所有的 Activity 实例，该栈内 Activity 一次只能有一个实例存在
 
   - 应用首页
 
@@ -48,23 +48,21 @@
 
   ### Intent flag
 
-  - FLAG_ACTIVITY_NEW_TASK
+- FLAG_ACTIVITY_SINGLE_TOP
 
-    待启动 Activity 的启动模式是 singleInstance 或者 singleTask 时候，系统会自动加上 FLAG_ACTIVITY_NEW_TASK
+  栈顶复用，和 singleTop 一致
 
-    
+- FLAG_ACTIVITY_NEW_TASK
 
-    
+  如果待启动 Activity 的启动模式是 singleInstance 或者 singleTask 的时候，那么系统就会在代码中自动加上 FLAG_ACTIVITY_NEW_TASK 标记
 
-  - FLAG_ACTIVITY_CLEAR_TOP
+- FLAG_ACTIVITY_CLEAR_TOP
 
-  - FLAG_ACTIVITY_SINGLE_TOP
+  如果待启动的 Activity 已经存在栈内，则把其上方的 Activity 全部出栈
 
-    栈顶复用，和 singleTop 一致
+- FLAG_ACTIVITY_CLEAR_TASK 
 
-    FLAG_ACTIVITY_CLEAR_TASK 
-
-    这个属性必须和 FLAG_ACTIVITY_NEW_TASK 一起使用
+  这个属性必须和 FLAG_ACTIVITY_NEW_TASK 一起使用
 
   
 

@@ -2,7 +2,7 @@
 
 
 
-特点
+## 特点
 
 - 原生支持列表、网格、瀑布流等布局
 - 分割线 ItemDecoration，较灵活
@@ -335,7 +335,7 @@ mAdapter.notifyItemChanged(int position,Object payload)
 mAdapter.notifyItemRangeChanged(int positionStart, int itemCount,Object payload)
 ```
 
-- 假设 payload 只传 【key 标记】的话，刷新前的数据源就需要修改完毕，这样 Adapter 才直接用数据源
+- 假设 payload 只传 【key 标记】的话，刷新前的数据源就需要先完成更新，这样 Adapter 才直接用数据源
 - 另外 payload 可以传 【key-value 键值对】，比如 Map ，那么 Adapter 可以不用数据源而改用 value
 
 
@@ -606,7 +606,7 @@ private void refreshDataByDiffUtil() {
 }
 ```
 
-- 能够保留了 item 动画
+- 能够保留 item 动画
 
 
 
@@ -622,7 +622,7 @@ private void refreshDataByDiffUtil() {
 
 #### 修改 DiffUtilCallback
 
-- 覆写 getChangePayload 方法
+- 继续覆写 getChangePayload 方法
 
 ```java
     @Nullable

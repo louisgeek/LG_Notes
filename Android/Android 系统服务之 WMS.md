@@ -1,3 +1,3 @@
 WMS
 
-- Windows Manager Service
+- Window Manager Service

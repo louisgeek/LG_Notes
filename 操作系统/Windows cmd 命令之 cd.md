@@ -1,5 +1,7 @@
 > 文中讨论的知识基于 Windows cmd  命令提示符在 `cmd /e:on` 命令扩展启用的情况下（默认是开启的 ，可以通过 `cmd /e:off` 关闭）
 
+# CD
+
 CHDIR 可以简写成 CD，全名 Change Directory ，有切换功能和显示功能
 
 # 切换功能
@@ -18,7 +20,6 @@ C:\Users\louisgeek>cd ..
 C:\Users>
 ```
 
-
 `cd \` 切换到根目录 ，路径里的`\` 和 `/`好像可以混用？
 
 ```shell
@@ -35,17 +36,15 @@ C:\>
 
 ```shell
 C:\Users\louisgeek\Desktop>cd ../..
-
 C:\Users>
 ```
 
 ```shell
 C:\Users\louisgeek\Desktop>cd ../../
-
 C:\Users>
 ```
 
-`cd <path> `切换到指定目录
+`cd <path> ` 切换到指定目录
 
 ```shell
 //不区分大小写 会变成存在目录的实际大小写

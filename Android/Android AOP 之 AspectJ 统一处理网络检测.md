@@ -1,23 +1,22 @@
+## 利用 Eclipse AspectJ
 
- 利用 AOP 之 Eclipse AspectJ 
+project gradle
 
 ```groovy
 //采用 AspectJX 来快速配置 Eclipse AspectJ
-//project gradle
 dependencies {
-        classpath "com.android.tools.build:gradle:4.1.2"
-        //add
-        classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.10'
+     classpath "com.android.tools.build:gradle:4.1.2"
+     //add
+     classpath 'com.hujiang.aspectjx:gradle-android-plugin-aspectjx:2.0.10'
 }
 ```
-
+module gradle
 ```groovy
 plugins {
     id 'com.android.application'
     //add
     id 'android-aspectjx'
 }
-//module gradle
 dependencies {
     //add
     implementation 'org.aspectj:aspectjrt:1.9.5'
@@ -86,13 +85,15 @@ id_tv_1.setOnClickListener(new View.OnClickListener() {
         //
 @CheckNetwork(tip = "网络开了小差")
 public void checkNetworkTest() {
-        Toast.makeText(this, "继续执行", Toast.LENGTH_SHORT).show();
+   Toast.makeText(this, "继续执行", Toast.LENGTH_SHORT).show();
 }     
 ```
 
-封装成 library 使用
 
-1 project gradle 
+
+## 封装成 library 使用
+
+project.gradle 
 
 ```groovy
 allprojects {
@@ -103,7 +104,7 @@ allprojects {
 }
 ```
 
-2 project gradle
+project.gradle
 
 ```groovy
  dependencies {
@@ -135,5 +136,5 @@ dependencies {
 }
 ```
 
-- 使用方式与上面一致
+- 使用方式与上文一致
 

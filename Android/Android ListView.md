@@ -102,7 +102,9 @@ public void updateItemView(ListView listView, int position, DataItem dataItem){
 
 
 
+优化
 
+要做一个尽可能流畅的ListView，你平时在工作中如何进行优化的？
 
 
 

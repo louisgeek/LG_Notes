@@ -36,3 +36,22 @@ Map
 
 
 由于长期的迭代和历史原因，有些集合类不推荐使用：Hashtable，Vector，Stack 等
+
+
+
+
+
+Collections 集合工具类的 Collections#SynchronizedMap
+
+并发包下的 ConcurrentHashMap
+
+
+
+
+
+### Collections#SynchronizedSet
+
+
+
+
+
