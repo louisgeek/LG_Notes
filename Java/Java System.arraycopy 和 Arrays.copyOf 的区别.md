@@ -1,3 +1,7 @@
+# System.arraycopy 和 Arrays.copyOf 的区别
+
+
+
 ## System.arraycopy 
 
 - 只有数组为一维数组且元素为基本类型、String 类型的时候是深拷贝，其它情况下都属于浅拷贝，比如元素是引用类型、二维数组的情况
@@ -114,7 +118,7 @@
 测试
 
 ```java
-   String[] array = {"a", "b", "c", "b", "d"};
+       String[] array = {"a", "b", "c", "b", "d"};
         System.out.println("array.length:" + array.length);
         String[] arrayCopy=new String[10];
         System.out.println("arrayCopy.length:" + arrayCopy.length);
@@ -205,7 +209,7 @@ arrayCopy.length:10
 测试
 
 ```java
-  String[] array = {"a", "b", "c", "b", "d"};
+ 		String[] array = {"a", "b", "c", "b", "d"};
         System.out.println("array.length:" + array.length);
         String[] arrayCopyed = Arrays.copyOf(array, 10);
         System.out.println("arrayCopyed.length:" + arrayCopyed.length);

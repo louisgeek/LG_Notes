@@ -1,10 +1,10 @@
 
 
- Collection 集合
+# Collection 集合
 
 
 
-Collection
+Collection 接口
 
 - List
   - java.util.ArrayList
@@ -50,25 +50,7 @@ Collection
 
 
 
-## ArrayList 和 Vector 的区别
-
-- Vector 底层原理和 ArrayList 基本一致，都是采用数组实现
-
-- ArrayList 是不保证线程安全的，Vector 是线程安全的
-- Vector 的增删改查相关的方法都加了 synchronized 关键字，这些方法都是同步的，比较耗时，效率不高
-
-
-
-
-
-## ArrayList 与 LinkedList 的区别
-
-- ArrayList 底层采用数组实现，LinkedList 底层采用双向循环链表数据结构实现
-
-- 通常情况下首选 ArrayList，经常需要增加和删除操作的时候选 LinkedList
-- LinkedList 查找操作需要从头开始查找元素，速度较慢
-
-
+## Set
 
 
 
@@ -151,43 +133,13 @@ Collection
 
 
 
-## java.util.ArrayList 和数组之间互转
-
-java.util.ArrayList -> 数组
-
-```java
-List<String> list = new ArrayList<>();
-list.add("1");
-list.add("2");
-list.add("3");
-list.add("4");
-//List 直接转成数组
-String[] array = list.toArray(new String[list.size()]);
-```
-
-
-
-数组 -> java.util.ArrayList 
-
-```java
-String[] array = new String[] {"1", "2", "3","4"};
-//注意这里返回的是 java.util.Arrays.ArrayList 而不是 java.util.ArrayList
-//可以调 set，get 等，而不能调 add，remove 等，因为没有实现会报 UnsupportedOperationException
-List<String> listTemp = Arrays.asList(array);
-List<String> list = new ArrayList<>(listTemp);
-```
-
-
-
-
+## 
 
 ## Collections
 
 
 
 ### Collections#binarySearch
-
-
 
 
 
@@ -199,7 +151,7 @@ List<String> list = new ArrayList<>(listTemp);
 
 
 
-### 空集合
+### empty 空集合
 
 ```
 List<String> list = Collections.emptyList();
@@ -208,6 +160,8 @@ Set<String> set = Collections.emptySet();
 ```
 
 - 空集合是不可变集合
+
+
 
 ### synchronized
 

@@ -23,7 +23,7 @@ implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 
 ```
 
-内部持有一个 ReentrantLock lock = new ReentrantLock(); 对于增删改操作都是先加锁再释放锁，线程安全。并且锁只有一把，而读操作不需要获得锁，支持并发。
+内部持有一个 ReentrantLock lock = new ReentrantLock()  对于增删改操作都是先加锁再释放锁，线程安全。并且锁只有一把，而读操作不需要获得锁，支持并发。
 
 读写分离，写时复制出一个新的数组，完成插入、修改或者移除操作后将新数组赋值给 array。
 
