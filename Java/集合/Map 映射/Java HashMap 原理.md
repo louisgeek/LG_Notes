@@ -131,6 +131,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 //传入 initialCapacity
     static final int tableSizeFor(int cap) {
         int n = cap - 1;
+        //无符号右移
         n |= n >>> 1;
         n |= n >>> 2;
         n |= n >>> 4;
@@ -240,6 +241,7 @@ public V put(K key, V value) {
  */
 static final int hash(Object key) {
     int h;
+    //根据key 的hashcode计算在哈希表中的存储位置
     return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
 }
 ```
