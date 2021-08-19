@@ -16,6 +16,10 @@ adb -s 10.0.4.66  shell pm list packages
 adb -s 10.0.4.66 shell pm path com.bsoft.mob.others
 //导出 文件 到电脑路径 D:/apks 必须是已存在的目录
 adb -s 10.0.4.66  pull /data/app/com.bsoft.mob.others-1/base.apk d:/apks
+//ps 用于快速复制
+adb shell pm list packages
+adb shell pm path com.bsoft.mob.others
+adb pull /data/app/com.bsoft.mob.others-1/base.apk d:/apks
 ```
 
 卸载 app
