@@ -1,0 +1,176 @@
+.bat
+start javaw -jar Resizer-1.4.2.jar
+exit
+
+
+
+Android View Binding in Thread error NullPointerException
+
+https://stackoverflow.com/questions/70526892/android-view-binding-in-thread-error-nullpointerexception
+
+
+
+# logcat
+
+^(?!(ANDROID_LOG_FROM_APP|ANDROID_LOG_FROM_MT|DSP|BSP|chatty|sssss))
+
+
+注意运算符的优先级，并用括号明确表达式的操作顺序，避免使用默认优先级
+
+ #禁用增量编译 show duplicated file
+kapt.incremental.apt=false
+
+
+
+
+# gitbook
+
+npm config set cache D:\DevTools\node-v14.17.6-win-x64\node_cache
+npm config set prefix D:\DevTools\node-v14.17.6-win-x64\node-global
+npm config set registry http://registry.npm.taobao.org
+npm config set registry https://registry.npmjs.org
+npm install -g gitbook-cli
+
+gitbook init
+
+
+
+
+
+
+#!/bin/bash
+wd=`pwd`
+sed -i 's/[ ]*//g' BatchClone.txt
+for path in `cat BatchClone.txt`
+do
+#${wd} /d/LouisGitlab/hikthermalComponent
+cd "${wd}"
+dir=${path#*//}
+#$dir /github.com/louisgeek/GitBatchClone.git
+if [ ! -x "$dir" ]; then
+echo "= Creating: project in ${wd} ="
+#mkdir -p "$dir"
+#cd "$dir"
+#deletepath=`pwd`
+#rm -rf "${deletepath}"
+#cd ..
+#${path} https://github.com/louisgeek/GitBatchClone.git
+echo "- Running: git clone ${path} -"
+git clone "${path}"
+echo "= Successfully cloned ${path} ="
+fi
+done
+
+
+
+
+
+
+
+
+
+
+
+
+https://curl.se/ca/cacert.pem
+
+https://curl.se/docs/sslcerts.html
+
+SSL certificate problem: unable to get local issuer certificate
+//其实安装的时候可以设置
+git config --global http.sslbackend schannel
+
+git config --global http.sslcainfo /mingw64/ssl/certs/ca-bundle.crt
+
+
+
+
+
+allprojects {
+
+    repositories {
+        maven {
+            url 'http://10.14.80.31:8085/repository/android-maven-public/'
+            allowInsecureProtocol true
+        }
+        all { ArtifactRepository repo ->
+            if (repo instanceof MavenArtifactRepository) {
+                def url = repo.url.toString()
+
+                if (!url.startsWith('http://10.14.80.31:')) {
+                    project.logger.lifecycle "Repository ${repo.url} replaced by My Maven."
+                    remove repo
+                }
+            }
+        }
+    }
+
+    buildscript {
+        repositories {
+            maven {
+                url 'http://10.14.80.31:8085/repository/android-maven-public/'
+                allowInsecureProtocol true
+            }
+            all { ArtifactRepository repo ->
+                if (repo instanceof MavenArtifactRepository) {
+                    def url = repo.url.toString()
+                    if (!url.startsWith('http://10.14.80.31:')) {
+                        project.logger.lifecycle "buildscript Repository ${repo.url} replaced by My Maven."
+                        remove repo
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+
+
+    String ByteArrayToHexString(byte[] inarray) {
+        int i, j, in;
+        String[] hex = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A",
+            "B", "C", "D", "E", "F" };
+        String out = "";
+
+        for (j = 0; j < inarray.length; ++j) {
+            in = (int) inarray[j] & 0xff;
+            i = (in >> 4) & 0x0f;
+            out += hex[i];
+            i = in & 0x0f;
+            out += hex[i];
+        }
+        return out;
+    } 
+	
+
+
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_com_hikvision_common_EncryptConst_getHeNanAESKey(JNIEnv *env, jclass clazz) {
+    std::string data = "567502e0e087c22b";
+    return env->NewStringUTF(data.c_str());
+}
+
+  externalNativeBuild {
+            cmake {
+                cppFlags ''
+                abiFilters 'armeabi-v7a'
+//                abiFilters 'arm64-v8a'
+            }
+        }
+
+   externalNativeBuild {
+        cmake {
+            path file('CMakeLists.txt')
+//            path file('src/main/cpp/CMakeLists.txt')
+            version '3.10.2'
+        }
+    }
+
+
+
+
+
+
