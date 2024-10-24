@@ -3,7 +3,7 @@
 HandlerThread
 
 - 继承 Thread 
-- 组合了 一个 Handler 和 Looper
+- 组合了一个 Handler 和 Looper
 
 
 
