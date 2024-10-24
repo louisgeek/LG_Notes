@@ -18,17 +18,7 @@ C:\Users\<User>\AppData\Local\JetBrains
 C:\Users\<User>\AppData\Roaming\JetBrains
 ```
 
-AS 系统目录 
 
-```
-C:\Users\<User>\AppData\Local\Google
-```
-
-AS 用户配置目录
-
-```
-C:\Users\<User>\AppData\Roaming\Google
-```
 
 
 
