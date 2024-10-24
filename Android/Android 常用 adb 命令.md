@@ -1,11 +1,13 @@
+# Android 常用 adb 命令
+
 启动 app
 
 ```shell
-adb shell am start -n "com.bsoft.mob.testapp/com.bsoft.mob.testapp.MainActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
+adb shell am start -n "com.louis.mob.testapp/com.louis.mob.testapp.MainActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
 ```
 
 ```shell
-adb shell am start -n "com.bsoft.mob.neb.webview.remote_http.debug/com.bsoft.mob.neb.SplashActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
+adb shell am start -n "com.louis.mob.test.webview.remote_http.debug/com.louis.mob.test.SplashActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
 ```
 
 提取 apk 备份
@@ -13,13 +15,9 @@ adb shell am start -n "com.bsoft.mob.neb.webview.remote_http.debug/com.bsoft.mob
 ```shell
 adb -s 10.0.4.66  shell pm list packages
 //获取包名的地址
-adb -s 10.0.4.66 shell pm path com.bsoft.mob.others
+adb -s 10.0.4.66 shell pm path com.louis.mob.others
 //导出 文件 到电脑路径 D:/apks 必须是已存在的目录
-adb -s 10.0.4.66  pull /data/app/com.bsoft.mob.others-1/base.apk d:/apks
-//ps 用于快速复制
-adb shell pm list packages
-adb shell pm path com.bsoft.mob.others
-adb pull /data/app/com.bsoft.mob.others-1/base.apk d:/apks
+adb -s 10.0.4.66  pull /data/app/com.louis.mob.others-1/base.apk d:/apks
 ```
 
 卸载 app
@@ -27,7 +25,7 @@ adb pull /data/app/com.bsoft.mob.others-1/base.apk d:/apks
 ```shell
 adb -s 10.0.4.66 shell pm list packages
 // -k 保存数据和缓存
-adb -s 10.0.4.66 uninstall -k com.louisgeek.testapp
+adb -s 10.0.4.66 uninstall -k com.louis.testapp
 ```
 
 root 下卸载 内置 系统 app
@@ -37,7 +35,7 @@ adb root
 //remount successful  //表示成功
 adb remount
 adb shell pm list package
-adb shell pm path com.bsoft.mob.ienr
+adb shell pm path com.louis.mob.ienr
 adb shell rm -rf  xxx.apk 
 //重启设备-- 可选
 adb shell reboot
@@ -87,6 +85,11 @@ adb shell getprop ro.product.manufacturer
 adb shell getprop ro.product.model
 ```
 
+adb 获取 cpu 架构 （armeabi-v7a 2011 年起 arm64-v8a 2014 年起）
+```shell
+adb shell getprop ro.product.cpu.abi
+```
+
 获取以太网 mac
 
 ```shell
@@ -96,7 +99,7 @@ adb shell cat /sys/class/net/eth0/address
 清除缓存
 
 ```shell
-adb shell pm clear com.louisgeek.xxx
+adb shell pm clear com.louis.xxx
 ```
 
 重启设备
@@ -115,8 +118,19 @@ adb connect
 命令 模拟 android studio 运行 app
 
 ```shell
-adb push E:\LouisWork\Louis\LouisAppBackup\app\build\outputs\apk\debug\app-debug.apk /data/local/tmp/com.louisgeek.appbackup
+adb push D:\LouisWork\AppBackup\app\build\outputs\apk\debug\app-debug.apk /data/local/tmp/com.louis.appbackup
 //
-adb shell pm install -t -r "/data/local/tmp/com.louisgeek.appbackup"
+adb shell pm install -t -r "/data/local/tmp/com.louis.appbackup"
+```
+
+记录 logcat 日志到文件
+```shell
+//存放在 adb 所在的目录里
+adb logcat > logs.txt
+```
+
+导出日志报告
+```shell
+adb  bugreport D:\bugs
 ```
 
