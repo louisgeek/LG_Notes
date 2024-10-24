@@ -1,3 +1,21 @@
+
+
+## 路径
+AS 系统目录 
+
+```
+C:\Users\<User>\AppData\Local\Google
+```
+
+AS 用户配置目录
+
+```
+C:\Users\<User>\AppData\Roaming\Google
+```
+
+
+
+
 ## 安装问题
 
 - Android Studio 4.2.2 
