@@ -12,6 +12,6 @@ Builder模式：比如AlertDialog.Builder；
 
 抽象工厂模式：比如BaseActivity；
 
-
+装饰模式：Context / ContextWrapper
 
  

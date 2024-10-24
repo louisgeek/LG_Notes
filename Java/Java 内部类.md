@@ -1,8 +1,8 @@
 ## 内部类（Inner Class）
 
 - 不能定义静态属性、静态方法
-- 内部类可以直接访问外部类属性，即便是 private 修饰的，但是外部类不可以直接访问内部类的元素
-- 内部类会自动捕获一个外部类的引用，所以内部类访问外部类元素，实际上是通过他所持有外部类引用访问的。
+- 内部类可以直接访问外部类的属性，即便是 private 修饰的，但是外部类不可以直接访问内部类的元素
+- 内部类会自动捕获一个外部类的引用，所以内部类能够访问外部类元素，实际上是通过所持有的外部类引用来访问的
 
 ### 成员内部类
 
@@ -34,9 +34,7 @@ public class OuterClass {
 OuterClass outerClass = new OuterClass();
 //外部类的实例 outerClass 直接.new
 OuterClass.InnerClass innerClass = outerClass.new InnerClass();
-```
 
-```java
 //或者
 OuterClass.InnerClass innerClass2 = new OuterClass().new InnerClass();
 ```

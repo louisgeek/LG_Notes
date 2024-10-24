@@ -30,7 +30,7 @@ Java 语言的运行机制是 Java 代码编译后生成一种特殊的 class �
 
  
 
-单例模式：双重校验锁，volatile关键字 
+单例模式：双重校验锁，volatile 关键字 
 
 - ### volatile 关键字
 

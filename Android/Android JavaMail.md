@@ -1,6 +1,6 @@
 ## 1 开始使用
 
-- 这里使用的 JavaMail for Android 1.6.0 版本（我是 jdk 1.8）
+- 这里使用的 JavaMail for Android 1.6.0 版本（jdk 1.8）
 
   https://javaee.github.io/javamail/Android
 
