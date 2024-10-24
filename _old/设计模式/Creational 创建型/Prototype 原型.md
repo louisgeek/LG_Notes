@@ -1,3 +1,0 @@
-- java.lang.Object#clone
-
-  

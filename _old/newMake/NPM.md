@@ -1,4 +1,0 @@
-# NPM
-
-- Node Package Manager
-

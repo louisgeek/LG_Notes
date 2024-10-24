@@ -1,1 +1,0 @@
-https://developer.android.google.cn/training/gestures
