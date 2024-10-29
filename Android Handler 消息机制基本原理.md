@@ -1,17 +1,200 @@
-# Android Handler 消息机制基本原理
+## Handler 
 
-## ActivityThread
+- Android 是基于消息驱动机制运行的
+
+
+Android 中定义的一套消息处理机制，为了能够实现线程间的通讯，封装了一套消息创建、传递、处理的机制，**非堵塞的消息传递机制**，可以将子线程的信息发送到主线程使用，比如更新 UI
+
+Handler 处理器
+
+Message 消息
+
+MessageQueue 消息队列，单向链表方式存储消息
+
+Looper 轮询器
+
+
+
+## 基本用法
+
+### 创建 Handler
+
+```java
+//Handler 无参构造函数，内部默认 mLooper = Looper.myLooper(); 这样不够明确，如果子线程调用，而 Looper 此时如果没有初始化，那么就抛异常了
+//@Deprecated
+Handler handler = new Handler();
+//显示传入 Looper 
+Handler handler = new Handler(Looper.myLooper());
+//传入 Looper 和 Handler#Callback
+Handler handler = new Handler(Looper.myLooper(), Handler#Callback);
+//主线程
+Handler uiHandler = new Handler(Looper.getMainLooper());
+```
+### 创建 Message
+
+```java
+Message msg = new Message();
+//传入 handler 后和下面写法一致，有缓存机制，避免重复创建实例对象
+Message msg = Message.obtain(handler);
+//内部直接调用 Message.obtain(this);
+Message msg = handler.obtainMessage();
+```
+
+
+
+### 收消息
+
+#### 1 重写 Handler#handleMessage
+
+##### 1.1 静态类
+
+```java
+static class MyHandler extends Handler{
+   	  //构造方法
+      public MyHandler() {
+          //过时
+            super();
+        }
+		//构造方法
+        public MyHandler(@NonNull Looper looper) {
+            super(looper);
+        }
+	//重写 handleMessage
+    @Override
+    public void handleMessage(@NonNull Message msg) {
+        //内部空方法
+        super.handleMessage(msg);
+        //
+    }
+}
+//实例化
+private  MyHandler mMyHandler = new MyHandler(Looper.myLooper());
+```
+
+##### 1.2 匿名类
+
+```java
+Handler handler = new Handler(Looper.myLooper()) {
+    @Override
+    public void handleMessage(@NonNull Message msg) {
+        //内部空方法
+        super.handleMessage(msg);
+        //
+    }
+};
+```
+
+#### 2 实现 Handler#Callback 接口 Callback#handleMessage 方法
+
+- Handler 传入 Callback 接口
+
+```java
+Handler handler= new Handler(Looper.myLooper(),new Handler.Callback() {
+      @Override
+      public boolean handleMessage(@NonNull Message msg) {
+         return false;
+      }
+});
+```
+
+#### 3 Handler#post 传入 Runnable
+
+- 发送的同时通过 Runnable 处理收到的消息，具体说明见下文【发消息 2】
+- 意味着该方法实现收发一体
+
+
+
+### 发消息
+
+#### 1 Handler#sendMessage 方式
+
+```java
+handler.sendMessage(msg);
+handler.sendMessageDelayed(obtain,time);
+```
+
+#### 2 Handler#post 方式
+
+- 不需要准备 Message 实例
+
+```java
+//handler.post
+public final boolean post(@NonNull Runnable r) {
+    //sendMessageDelayed 和上文说的 sendMessage 里的原理一致
+    return  sendMessageDelayed(getPostMessage(r), 0);
+}
+//handler.postDelayed
+public final boolean postDelayed(@NonNull Runnable r, long delayMillis) {
+    return sendMessageDelayed(getPostMessage(r), delayMillis);
+}
+//Runnable 封装成 Message 的 callback
+private static Message getPostMessage(Runnable r) {
+    Message m = Message.obtain();
+    //Message#callback 被赋值，对应上文【收消息 3】
+    m.callback = r;
+    return m;
+}
+```
+
+#### 3 Activity#runOnUiThread
+
+- 内部也是调用 Handler#post
+
+```java
+ public final void runOnUiThread(Runnable action) {
+        if (Thread.currentThread() != mUiThread) {
+            mHandler.post(action);
+        } else {
+            action.run();
+        }
+}
+```
+
+
+
+## 消息分发
+
+```java
+ /**
+     * Handle system messages here.
+     */
+    public void dispatchMessage(@NonNull Message msg) {
+        if (msg.callback != null) {
+       //内部直接调用 message.callback.run(); 所以就是处理上文 Handler#post 之类发送的消息
+       //对应上文【3 Handler#post 传入 Runnable】
+          handleCallback(msg);
+        } else {
+            //Handler#Callback 接口
+            if (mCallback != null) {
+                //对应上文【2 实现 Handler#Callback 接口 Callback#handleMessage 方法】
+                if (mCallback.handleMessage(msg)) {
+                    return;
+                }
+            }
+            //对应上文【1 重写 Handler#handleMessage】
+            handleMessage(msg);
+        }
+    }
+```
+
+- 先处理 Message#callback 的 Runnable ，如果有就直接处理 Runnable 后结束，如果没有就判断有没有 Handler#Callback 接口，如有则判断其返回值，返回是 true 就不继续执行了，返回 false 那么就继续执行 Handler#handleMessage 方法
+
+
+
+## 基本原理
+
+
 ```java
 //ActivityThread.java 的 main() 方法调用了 Looper.prepareMainLooper()
 public static void main(String[] args){
 
-    //UI 线程默认已经调用以下方法创建了 Looper 对象，是系统自动调用的
-    Looper.prepareMainLooper();
+//UI 线程默认已经调用以下方法创建了 Looper 对象，是系统自动调用的
+Looper.prepareMainLooper();
     //...
     //然后最后调用 loop() 进入死循环，轮询不断获取消息
-    Looper.loop();
+Looper.loop();
     //正常不会走到这，走到着代表 App 异常了
-    throw new RuntimeException("Main thread loop unexpectedly exited");
+throw new RuntimeException("Main thread loop unexpectedly exited");
 }
 ```
 
@@ -98,7 +281,7 @@ public boolean sendMessageAtTime(@NonNull Message msg, long uptimeMillis) {
 
 handler.enqueueMessage 里面就是调用了 queue.enqueueMessage(msg, uptimeMillis) 方法
 
-```
+```java
     boolean enqueueMessage(Message msg, long when) {
         //...
        //多个线程给 MessageQueue 发消息，加锁保证线程安全，
@@ -156,11 +339,35 @@ Handler.dispatchMessage(Message msg)
 
 
 
+## ThreadLocal
+
+- 是一个线程内部的数据存储类，数据存取时做到了线程隔离
+- 提供了一个全局的哈希表，用于实现指定线程的数据控制
+- 推荐主动调用 ThreadLocal.remove 方法，防止内存泄漏
+
+
+
+## HandlerThread
 
 
 
 
-## 子线程中创建 Handler 为啥报错，主线程中创建为啥不报错？
+
+## IdleHandler
+
+
+
+
+
+## Handler 的同步屏障机制
+
+
+
+
+
+## 问答
+
+### 子线程中创建 Handler 为啥会报错，主线程中创建为啥不报错？
 
 ```java
 public Handler(@Nullable Callback callback, boolean async) {
@@ -181,7 +388,7 @@ public Handler(@Nullable Callback callback, boolean async) {
 
 结合上文，主线程中已经默认调用了 Looper.prepareMainLooper() 所以不会报错，而子线程没有就会报错
 
-## 子线程中怎么使用 Handler
+### 子线程中怎么去使用 Handler？
 
 结合上文，子线程中使用 Handler 需要先执行两个操作：Looper.prepare()  和 Looper.loop()  ，因为上述 mLooper 为空时候，即 sThreadLocal.get() 为空，而 Looper.prepare()  就是 sThreadLocal.set(new Looper(quitAllowed)) ，另外调用 Looper.loop()  开启消息循环**等待接收消息**，因此最终不需要的时候别忘了终止 Looper，调用`Looper.myLooper().quit()`
 
@@ -204,17 +411,34 @@ void checkThread() {
 
 旧版安卓在主线程中进行网络操作是不会报错的，新的理解加入了校验所以报错，所以生活可以把校验去掉硬在主线程里进行网络操作
 
-### 主线程如何通过 Handler 给子线程发消息
+### 主线程如何通过 Handler 给子线程发消息？
 
 //**主线程延时给子线程发消息**
 
- 
+//通过 **HandlerThread**  
+
+
+
+
+
+
+### Message#what 的不同值，会影响 Message 在 MessageQueue 中的顺序么？
+
+
+
+MessageQueue 中的 Message是如何排列的？Msg 的 runnable 对象可以外部设置么，比如说不用Handler#post 系列方法（反射可以实现）；
+
 
 ## IntentService
 
 
+### handler 如何实现延时发消息 postDelay ？
 
-##  View.post  和 Handler.post 的区别
+也是通过 sendMessageDelayed 方式实现的
+
+
+
+###  View.post  和 Handler.post 的区别
 
 上文说过了 Handler.post 接下来看下 View.post 原理
 
@@ -232,7 +456,7 @@ View.post
         getRunQueue().post(action);
         return true;
     }
-    
+
       public boolean postDelayed(Runnable action, long delayMillis) {
         final AttachInfo attachInfo = mAttachInfo;
         if (attachInfo != null) {
@@ -259,9 +483,14 @@ View.post 最终也是通过 Handler.post 来执行消息的，执行过程如�
 
 ## IdleHandler是什么
 
+## ThreadLocal 是什么
 
 
-## Looper在主线程中死循环，为啥不会 ANR ，如果响应用户事件
+### Looper在主线程中死循环，为啥不会 ANR ，如何响应用户事件？
+
+
+
+
 
 Looper 阻塞 - 主线程也阻塞- **ActivityThread**  main函数也阻塞，不会走到最后一步抛异常
 
@@ -269,15 +498,26 @@ Looper 阻塞 - 主线程也阻塞- **ActivityThread**  main函数也阻塞，�
 
 
 
-## handler 引起的内存泄漏，如何避免
 
-**静态内部类**，Handler就不能调用Activity里的非静态方法了，所以加上「**弱引用**」
+
+### handler 引起的内存泄漏，如何避免？
+
+- 静态内部类 、WeakReference 弱引用
+
+静态内部类，Handler 就不能调用 Activity 里的非静态方法了，所以加上 WeakReference  弱引用
 
 有延时消息的销毁时候及时调用 handler.removeCallbacksAndMessages(null)
 
 
 
-## ThreadLocal 是什么
+
+### 为啥 Message 消息对象持有构造它的 Handler 对象？
+
+
+
+
+
+### Looper 阻塞的时候 采用了 epoll 机制 什么原理？
 
 
 
@@ -296,6 +536,28 @@ Looper 阻塞 - 主线程也阻塞- **ActivityThread**  main函数也阻塞，�
 
 
 为啥 Message 消息对象持有构造它的 Handler 对象？
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

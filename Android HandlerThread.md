@@ -1,9 +1,5 @@
-
-
-HandlerThread
-
-- 继承 Thread 
-- 组合了一个 Handler 和 Looper
+# Android HandlerThread
+- HandlerThread 继承 Thread，组合了一个 Handler 和 Looper
 
 
 
