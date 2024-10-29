@@ -5,7 +5,7 @@
 
 
 
-> æºç åŸºäº  3.12.0
+> Ô´Âë»ùÓÚ  3.12.0
 
 
 
@@ -13,7 +13,7 @@
 
 ```java
 public OkHttpClient() {
-    //æ— å‚æ„é€ å°±ç›¸å½“äºåˆ›å»ºäº†ä¸€ä¸ªç©º Builder å¯¹è±¡
+    //ÎŞ²Î¹¹Ôì¾ÍÏàµ±ÓÚ´´½¨ÁËÒ»¸ö¿Õ Builder ¶ÔÏó
     this(new Builder());
 }
 
@@ -76,7 +76,7 @@ OkHttpClient(Builder builder) {
 public Builder newBuilder() {
     return new Builder(this);
 }
-//é™æ€å†…éƒ¨ç±»
+//¾²Ì¬ÄÚ²¿Àà
 public static final class Builder {
    ...
 }
@@ -89,7 +89,7 @@ public static final class Builder {
 ## okhttp3.OkHttpClient#newCall
 
 ```java
-//è°ƒåº¦å™¨
+//µ÷¶ÈÆ÷
 final Dispatcher dispatcher;
 final List<Interceptor> interceptors;
 final List<Interceptor> networkInterceptors;
@@ -171,20 +171,20 @@ static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolea
 //
 /** Executes calls. Created lazily. */
 private @Nullable ExecutorService executorService;
-//å¼‚æ­¥æ­¥è¯·æ±‚çš„å¾…æ‰§è¡Œé˜Ÿåˆ—
+//Òì²½²½ÇëÇóµÄ´ıÖ´ĞĞ¶ÓÁĞ
 /** Ready async calls in the order they'll be run. */
 private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
-//å¼‚æ­¥è¯·æ±‚çš„æ­£åœ¨æ‰§è¡Œé˜Ÿåˆ—
+//Òì²½ÇëÇóµÄÕıÔÚÖ´ĞĞ¶ÓÁĞ
 /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
 private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>();
-//åŒæ­¥è¯·æ±‚çš„æ­£åœ¨æ‰§è¡Œé˜Ÿåˆ—
+//Í¬²½ÇëÇóµÄÕıÔÚÖ´ĞĞ¶ÓÁĞ
 /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
 private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
 
 /** Used by {@code Call#execute} to signal it is in-flight. */
 synchronized void executed(RealCall call) {
-   //åŠ é” 
-   //åŠ å…¥åŒæ­¥è¯·æ±‚çš„æ­£åœ¨æ‰§è¡Œé˜Ÿåˆ—
+   //¼ÓËø 
+   //¼ÓÈëÍ¬²½ÇëÇóµÄÕıÔÚÖ´ĞĞ¶ÓÁĞ
    runningSyncCalls.add(call);
 }
 ```
@@ -202,11 +202,11 @@ synchronized void executed(RealCall call) {
   private <T> void finished(Deque<T> calls, T call) {
     Runnable idleCallback;
     synchronized (this) {
-      //ç§»å‡ºé˜Ÿåˆ—
+      //ÒÆ³ö¶ÓÁĞ
       if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
       idleCallback = this.idleCallback;
     }
-	//åé¢æ¶‰åŠå¼‚æ­¥çš„æ—¶å€™ç»†è¯´
+	//ºóÃæÉæ¼°Òì²½µÄÊ±ºòÏ¸Ëµ
     boolean isRunning = promoteAndExecute();
 
     if (!isRunning && idleCallback != null) {
@@ -223,30 +223,30 @@ synchronized void executed(RealCall call) {
 
 ```java
 Response getResponseWithInterceptorChain() throws IOException {
-    //æ‹¦æˆªå™¨é“¾
+    //À¹½ØÆ÷Á´
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
-    //okHttpClient æ„å»ºæ—¶å€™ä¼ å…¥çš„è‡ªå®šä¹‰æ‹¦æˆªå™¨
+    //okHttpClient ¹¹½¨Ê±ºò´«ÈëµÄ×Ô¶¨ÒåÀ¹½ØÆ÷
     interceptors.addAll(client.interceptors());
-    //å¤±è´¥é‡è¯•ï¼Œé‡å®šå‘æ‹¦æˆªå™¨
+    //Ê§°ÜÖØÊÔ£¬ÖØ¶¨ÏòÀ¹½ØÆ÷
     interceptors.add(retryAndFollowUpInterceptor);
-    //è¯·æ±‚å¤´
+    //ÇëÇóÍ·
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
-    //ç¼“å­˜æ‹¦æˆªå™¨ï¼Œè¯»å–ä¿®æ”¹ç¼“å­˜
+    //»º´æÀ¹½ØÆ÷£¬¶ÁÈ¡ĞŞ¸Ä»º´æ
     interceptors.add(new CacheInterceptor(client.internalCache()));
-    //ç½‘ç»œè¿æ¥æ‹¦æˆªå™¨ï¼Œæ­£å¼å¼€å¯ http è¯·æ±‚ï¼Œä¸æœåŠ¡å™¨è¿æ¥
+    //ÍøÂçÁ¬½ÓÀ¹½ØÆ÷£¬ÕıÊ½¿ªÆô http ÇëÇó£¬Óë·şÎñÆ÷Á¬½Ó
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
-      //okHttpClient æ„å»ºæ—¶å€™ä¼ å…¥çš„è‡ªå®šä¹‰ç½‘ç»œæ‹¦æˆªå™¨
+      //okHttpClient ¹¹½¨Ê±ºò´«ÈëµÄ×Ô¶¨ÒåÍøÂçÀ¹½ØÆ÷
       interceptors.addAll(client.networkInterceptors());
     }
-    //å‘é€ç½‘ç»œè¯·æ±‚å’Œè¯»å–ç½‘ç»œå“åº”
+    //·¢ËÍÍøÂçÇëÇóºÍ¶ÁÈ¡ÍøÂçÏìÓ¦
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
-	//RealInterceptorChain é€šè¿‡é€’å½’æ‰å¤´ï¼Œç„¶æ¯æ¬¡é€šè¿‡ index+1 åˆ†åˆ«å®Œæˆæ‹¦æˆªå™¨é›†åˆå†…å„ä¸ªæ‹¦æˆªå™¨çš„å¤„ç†
+	//RealInterceptorChain Í¨¹ıµİ¹éµôÍ·£¬È»Ã¿´ÎÍ¨¹ı index+1 ·Ö±ğÍê³ÉÀ¹½ØÆ÷¼¯ºÏÄÚ¸÷¸öÀ¹½ØÆ÷µÄ´¦Àí
     return chain.proceed(originalRequest);
   }
 ```
@@ -327,13 +327,13 @@ Response getResponseWithInterceptorChain() throws IOException {
 
 ##### okhttp3.Dispatcher#executorService
 
-- å’Œ okhttp3.ConnectionPool é‡Œçš„çº¿ç¨‹æ± ä¸€è‡´
-- é€»è¾‘ç›¸å½“äºå¸¦å‚çš„ java.util.concurrent.Executors#newCachedThreadPool
+- ºÍ okhttp3.ConnectionPool ÀïµÄÏß³Ì³ØÒ»ÖÂ
+- Âß¼­Ïàµ±ÓÚ´ø²ÎµÄ java.util.concurrent.Executors#newCachedThreadPool
 
 ```java
  public synchronized ExecutorService executorService() {
     if (executorService == null) {
-        //å»¶è¿Ÿåˆå§‹åŒ–
+        //ÑÓ³Ù³õÊ¼»¯
         //corePoolSize maximumPoolSize keepAliveTime unit workQueue
       executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
           new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
@@ -377,7 +377,7 @@ Response getResponseWithInterceptorChain() throws IOException {
       assert (!Thread.holdsLock(client.dispatcher()));
       boolean success = false;
       try {
-        //æ‰§è¡Œ NamedRunnable -> run -> okhttp3.RealCall.AsyncCall#execute
+        //Ö´ĞĞ NamedRunnable -> run -> okhttp3.RealCall.AsyncCall#execute
         executorService.execute(this);
         success = true;
       } catch (RejectedExecutionException e) {
@@ -392,7 +392,7 @@ Response getResponseWithInterceptorChain() throws IOException {
       }
     }
 	//okhttp3.RealCall.AsyncCall#execute
-    //æ­¤æ–¹æ³•å†…éƒ¨å¯ä»¥çœ‹å‡º å›æ‰æ˜¯åœ¨å­çº¿ç¨‹é‡Œ
+    //´Ë·½·¨ÄÚ²¿¿ÉÒÔ¿´³ö »ØµôÊÇÔÚ×ÓÏß³ÌÀï
      @Override protected void execute() {
       boolean signalledCallback = false;
       timeout.enter();
@@ -400,11 +400,11 @@ Response getResponseWithInterceptorChain() throws IOException {
         Response response = getResponseWithInterceptorChain();
         if (retryAndFollowUpInterceptor.isCanceled()) {
           signalledCallback = true;
-          //å›è°ƒå¤±è´¥æ–¹æ³•ï¼šå–æ¶ˆ
+          //»Øµ÷Ê§°Ü·½·¨£ºÈ¡Ïû
           responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
         } else {
           signalledCallback = true;
-          //å›è°ƒæˆåŠŸæ–¹æ³•
+          //»Øµ÷³É¹¦·½·¨
           responseCallback.onResponse(RealCall.this, response);
         }
       } catch (IOException e) {
@@ -414,7 +414,7 @@ Response getResponseWithInterceptorChain() throws IOException {
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
           eventListener.callFailed(RealCall.this, e);
-            //å›è°ƒå¤±è´¥æ–¹æ³•
+            //»Øµ÷Ê§°Ü·½·¨
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
@@ -447,7 +447,7 @@ public abstract class NamedRunnable implements Runnable {
       Thread.currentThread().setName(oldName);
     }
   }
-  //å…·ä½“å®ç° okhttp3.RealCall.AsyncCall#execute
+  //¾ßÌåÊµÏÖ okhttp3.RealCall.AsyncCall#execute
   protected abstract void execute();
 }
 ```
@@ -477,7 +477,7 @@ public abstract class NamedRunnable implements Runnable {
     Response priorResponse = null;
     //
     while (true) {
-      //å¾ªç¯ å–æ¶ˆ
+      //Ñ­»· È¡Ïû
       if (canceled) {
         streamAllocation.release();
         throw new IOException("Canceled");
@@ -562,4 +562,4 @@ public abstract class NamedRunnable implements Runnable {
 
 
 
-![OkHttp æµç¨‹å›¾](https://gitee.com/louisgeek/LG_Notes/raw/master/images/okhttp.png)
+![OkHttp Á÷³ÌÍ¼](https://gitee.com/louisgeek/LG_Notes/raw/master/images/okhttp.png)
