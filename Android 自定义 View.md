@@ -20,7 +20,7 @@
 
 - View 树结构，从根节点开始
 
-- 屏幕坐标系和数学坐标系不太一样 ，屏幕左上角是坐标原点，Y 轴往下增大
+- 屏幕坐标系和数学坐标系不太一样 ，屏幕左上角是坐标原点，Y轴往下增大
 
 - 角度(angle)   360°  屏幕坐标系中角度增大方向为顺时针，而数学坐标系则是逆时针
 
@@ -33,17 +33,22 @@
   > 当角度以弧度形式给出时，通常不写弧度单位，直接写值
 
 - 颜色模式
-   
+
    >  ARGB8888 、ARGB4444 、RGB565 (安卓默认模式) 、Alpha8 
+    >
 
 
 
 ## 自定义 View 的基本流程
 
 - 1 重写构造方法，通常是 4 个构成方法，至少重写一个，初始化和获取自定义属性
-- 2 重写 onMeasure ，测量 View 大小
-- 3 重写 onSizeChanged ，确定 View 大小
-- 4 重写 onLayout ，确定子 View 布局（ViewGroup 才有）
+
+- 2 重写 onMeasure ，测量View大小
+
+- 3 重写 onSizeChanged ，确定View大小
+
+- 4 重写 onLayout ，确定子View布局（ViewGroup）
+
 - 5 重写 onDraw，绘制内容
 
 
@@ -188,7 +193,7 @@ protected void measureChild(View child, int parentWidthMeasureSpec,
 
 - 内部调用过 super.layout (就是 View.layout)
 
-  
+
 
 ### ViewGroup.onLayout(boolean changed,int l, int t, int r, int b)
 
@@ -235,7 +240,15 @@ childView.getBottom  代表 childView 的下侧到 parentView 上侧的距离
 
 
 
- 
+## 事件分发
+
+- **责任链模式**
+
+dispatchTouchEvent 事件分发
+
+onInterceptTouchEvent 事件拦截  ViewGroup 
+
+onTouchEvent 事件消费
 
 
 
@@ -245,7 +258,7 @@ childView.getBottom  代表 childView 的下侧到 parentView 上侧的距离
 
 #### 处理 View 的事件冲突
 
-- 外部拦截法	
+- 外部拦截法
 - 内部拦截法
 
 
