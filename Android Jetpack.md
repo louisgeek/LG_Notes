@@ -1,6 +1,5 @@
-# Jetpack 
-
-- 组件、套件、套装
+# Android Jetpack 
+- Jetpack 组件、套件、套装
 - 帮助开发者高效开发应用的工具集
 - 遵循最佳做法、消除样板代码、减少不一致
 - Google 把自己的 Android 生态重新整理分类

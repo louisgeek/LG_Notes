@@ -39,3 +39,4 @@ endDocument：读取XML文档结束。
 PULL
 
 - 
+Android LayoutInfalie 采用这种方式

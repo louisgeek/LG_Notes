@@ -1,22 +1,18 @@
+# Android LayoutInflater 源码解析
 > 源码基于 Android 11 API 30
 
 ## LayoutInflater 简介
-
-- android.view.LayoutInflater （Inflater 充气者，把布局 xml 膨胀成 View 树）
-- 布局解析器，把 xml 布局文件解析后动态生成 View
-- 是一个抽象类
-- 是一个系统服务，服务名称 Context.LAYOUT_INFLATER_SERVICE = "layout_inflater"
+- android.view.LayoutInflater 布局解析器（Inflater 充气者，把布局 xml 膨胀成 View 树），把 xml 布局文件解析后动态生成 View
+- LayoutInflater 类是一个抽象类
+- LayoutInflater 是一个系统服务，服务名称 Context.LAYOUT_INFLATER_SERVICE = "layout_inflater"
 
 ## 获取 LayoutInflater 实例方法
-
 ### 1 Context#getSystemService
-
 ```java
 LayoutInflater LayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 ```
 
 ### 2 LayoutInflater#from
-
 ```java
 public static LayoutInflater from(Context context) {
 //就是调用了 Context#getSystemService
@@ -30,8 +26,8 @@ LayoutInflater LayoutInflater = (LayoutInflater) context.getSystemService(Contex
 ```
 
 ### 3 Activity#getLayoutInflater
-
 ```java
+//Activity#getLayoutInflater
 private Window mWindow;
 public Window getWindow() {
         return mWindow;
@@ -41,11 +37,8 @@ public LayoutInflater getLayoutInflater() {
     //PhoneWindow 是 mWindow 的唯一继承实现类 
    return getWindow().getLayoutInflater();
 }
-```
 
-- PhoneWindow#getLayoutInflater
-
-```java
+//PhoneWindow#getLayoutInflater
 private LayoutInflater mLayoutInflater;
 public PhoneWindow(Context context) {
         super(context);
@@ -62,32 +55,24 @@ public LayoutInflater getLayoutInflater() {
 ```
 
 ## inflate 解析方法
-
 ### 1 View#inflate
-
 ```java
+//解析布局生成 View 后将其加入 ViewGroup 里面
 public static View inflate(Context context, @LayoutRes int resource, ViewGroup root) {
+        //其实就是调用了 LayoutInflater.from(context).inflate(resource, root) 方法
         LayoutInflater factory = LayoutInflater.from(context);
         return factory.inflate(resource, root);
 }
 ```
 
-- 其实就是调用了 LayoutInflater.from(context).inflate(resource, root) 方法
-- 解析布局生成 View 后将其加入 ViewGroup 里面
-
 ##### View.inflate 方式的注意事项
-
 - root == null 成立，那么 attachToRoot = false
 - root  != null 成立，那么 attachToRoot = true
-
 所以不适合在列表的 Adapter 里使用，因为它会自己添加 child view ，做不到 root !=null 同时 attachToRoot = false 的情况
-
 所以也不合适在 Fragment#onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)  方法里使用，因为 FragmentManager 里会执行一次 container.addView
 
 ### 2 LayoutInflater#inflate
-
 - Android 内置了 org.xmlpull 组件，用 pull 方式处理 xml
-
 ```java
 public View inflate(@LayoutRes int resource, @Nullable ViewGroup root) {
         return inflate(resource, root, root != null);
@@ -210,18 +195,13 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
         }
     }
 ```
-
 - root == null || attachToRoot == false 返回 xml 解析出的 temp 视图
 - root != null && attachToRoot == true 返回传入的 root 视图，进行了 root.addView(temp, params) ，addView 方法里进行了 temp .setLayoutParams(params) 
 - root != null && attachToRoot == false 时 xml 解析出的 temp 视图 ，此时需要 temp .setLayoutParams(params)
-
-由此可以得出当 root 为空时，xml 最外层布局的属性会失效，因为压根没有设置参数嘛！
+由此可以得出当 root 为空时，xml 最外层布局的属性会失效，因为压根没有设置参数
 
 #### tryInflatePrecompiled
-
-- Android 10 API 29 中新增特征，暂不深究
-- 采用预编译方式减少 xml 解析时间
-
+- Android 10 API 29 中新增特征，采用预编译方式减少 xml 解析时间，暂不深究
 ```java
  private @Nullable
     View tryInflatePrecompiled(@LayoutRes int resource, Resources res, @Nullable ViewGroup root,
@@ -273,7 +253,6 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
         return null;
     }
 ```
-
 - 通过反射来生成对应 View
 - mUseCompiledView = true 的情况，现仅供内部测试使用，其他情况默认 false
 
@@ -343,7 +322,6 @@ public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean atta
 ```
 
 #### Resources#getLayout
-
 - android.content.res.Resources
 
 ```java
@@ -378,7 +356,6 @@ XmlResourceParser loadXmlResourceParser(String file, int id, int assetCookie,
 ```
 
 ##### XmlResourceParser
-
 - android.content.res.XmlResourceParser 
 
 ```java
@@ -976,24 +953,14 @@ final View createView(View parent, final String name, @NonNull Context context,
 
 - 解析 xml ，判断 view 类型，实例化指定控件对象
 
-## 总结
-
+## 小结
 LayoutInflater 布局解析器是一个系统服务，作用是解析布局文件后动态生成 View
-
 三种获取实例的方法最终都是通过 Context#getSystemService 方法实现的，里面涉及到单例模式
-
 Activity#setContentView 方法内部也用到了 LayoutInflater 进行布局解析
-
 LayoutInflater 内部采用了 org.xmlpull 解析器实现 xml 解析
-
 - LayoutInflater 布局解析器进行 inflate 解析的流程是怎么样的？
-
-1 LayoutInflater 有四个方法重载，其中两个针对 xml 布局文件，另外两个是针对现成的 XmlResourceParser
-
-2 如果是 xml 布局文件，可以通过 Resources#getLayout 把 xml 布局文件解析加载得到 XmlResourceParser
-
-3 因为 XmlResourceParser 包含属性信息，所以利用 Xml#asAttributeSet 将其转化成 AttributeSet 供后续使用
-
-4 通过 advanceToRootNode 方法找到根标签，如遇到的不是 <merge/> 标签就通过 createViewFromTag 方法把根标签对应类通过反射的方式创建出来，然后调用 rInflateChildren 方法，而它就是调用了 rInflate 方法，从而实现了递归，而 rInflate 内部也调用了 createViewFromTag ，所以用递归调用的方式把子 View 一个个创建出来并通过 addView 加入其父 View 中，如遇到 <merge/> 标签就直接调用 rInflate 先进行处理一次，最终形成一个视图树
-
-5 整个流程中还涉及到反射、ClassLoader、换肤等知识点可以展开
+    - 1 LayoutInflater 有四个方法重载，其中两个针对 xml 布局文件，另外两个是针对现成的 XmlResourceParser
+    - 2 如果是 xml 布局文件，可以通过 Resources#getLayout 把 xml 布局文件解析加载得到 XmlResourceParser
+    - 3 因为 XmlResourceParser 包含属性信息，所以利用 Xml#asAttributeSet 将其转化成 AttributeSet 供后续使用
+    - 4 通过 advanceToRootNode 方法找到根标签，如遇到的不是 <merge/> 标签就通过 createViewFromTag 方法把根标签对应类通过反射的方式创建出来，然后调用 rInflateChildren 方法，而它就是调用了 rInflate 方法，从而实现了递归，而 rInflate 内部也调用了 createViewFromTag ，所以用递归调用的方式把子 View 一个个创建出来并通过 addView 加入其父 View 中，如遇到 <merge/> 标签就直接调用 rInflate 先进行处理一次，最终形成一个视图树
+    - 5 整个流程中还涉及到反射、ClassLoader、换肤等知识点可以展开
