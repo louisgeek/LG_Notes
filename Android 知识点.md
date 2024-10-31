@@ -1,137 +1,50 @@
 # Android 知识点
 
-# 四大组件
-典型的 Android 应用包含多个应用组件 app component ，包括 Activity、Fragment、Service、内容提供程序 content provider 和广播接收器 broadcast receiver，应用组件可以不按顺序地单独启动，并且操作系统或用户可以随时销毁它们，因此不应在应用组件中存储任何应用数据或状态，并且应用组件不应相互依赖
+## 四大组件
+典型的 Android 应用包含多个应用组件 App Component ，包括 Activity、Fragment、Service、Content Provider 内容提供程序和 Broadcast Receiver 广播接收器，应用组件可以不按顺序地单独启动，并且操作系统或者用户可以随时销毁它们，因此不应在应用组件中存储任何应用数据或状态，并且应用组件不应相互依赖
+
+## Activity
+### Activity 启动模式
+- 1 standard 标准模式
+- 2 singleTop 栈顶复用模式  （例如：通知栏推送点击消息界面）
+- 3 singleTask 栈内复用模式 （例如：首页）
+- 4 singleInstance 单例模式  （单独位于一个任务栈中，例如：拨打电话界面、浏览器）
+
+### Activity 初始化流程
+ActivityThread#startActivityNow
+ActivityThread#handleLaunchActivity 处理 Activity 启动
+- ActivityThread#performLaunchActivity 完成 Activity 启动  -> Activity#onCreate
+- Instrumentation#newActivity 实例化 Activity
+- AppComponentFactory#instantiateActivity App 组件工厂实例化 Activity
+- ClassLoader#loadClass 类加载器
+实例化后会调用 Activity#attach 继续进行初始化
+ActivityThread#performResumeActivity -> Activity#onResume
+
+### Activity 启动流程
+startActivity最终都会调用startActivityForResult，通过ActivityManagerProxy调用system_server进程中ActivityManagerService的startActvity方法，如果需要启动的Activity所在进程未启动，则调用Zygote孵化应用进程，
+进程创建后会调用应用的ActivityThread的main方法，
+main方法调用attach方法将应用进程绑定到ActivityManagerService（保存应用的ApplicationThread的代理对象）并开启loop循环接收消息。ActivityManagerService通过ApplicationThread的代理发送Message通知启动Activity，
+ActivityThread内部Handler处理handleLaunchActivity，
+依次调用performLaunchActivity，handleResumeActivity（即activity的onCreate，onStart，onResume）
 
 
-## 已经有 Activity 了，为什么还要引入 Fragment
-Fragment 允许将界面分成为好几个区块，从而将模块化和可重用性引入 
-Activity 
+
+
+
+
+## Fragment
+Fragment 允许将界面分成为好几个区块，从而将模块化和可重用性能力引入 Activity 
 同一功能界面根据屏幕大小不同可以实现两个版本的页面显示样式
 
-## Handler 消息机制的原理
-
-子线程中创建 Handler
-
-Handler post 方法原理
-
-HandlerThread
-
-## Linux 进程间通信
-管道
-
-消息队列
-
-共享内存
-
-套接字
-
-信号量
-## 跨进程通信方式
-
-
-## !!!!Binder IPC 通信大概分了几层
-一、Java 层：供应用程序开发者使用的 Java 接口层，通过这一层可以方便地进行进程间通信。
-二、Native 层 JavaBBinder 和 BpBinder：Native 层中，，用于实现 Java 层与内核层之间的通信转换。
-三、Native 层 Binder 驱动：。
-四、服务端和客户端通信层：服务端实现具体的服务逻辑并通过 Binder 机制提供给客户端调用，客户端通过 Binder 代理与服务端进行通信。
-
-Framework 框架层：这一层主要包含Java Binder和JNI（Java Native Interface）部分，用于上层应用程序与Binder框架的交互。
-Native 层：创建 Service Manager 以及 BBinder、BpBinder 模型，负责实际的 IPC 通信过程，Java 层的 Binder 对象对应 Native 层的 JavaBBinder 对象，Java 层的 BinderProxy 对象对应 Native 层的 BpBinder 对象
-Kernal 层：对应就是 Binder 驱动，位于 Linux 内核中，负责处理进程间通信的底层实现，管理 Binder 实体对象和引用，以及处理进程间的数据传输和同步等操作
-
-
-## 哪些场景会涉及到 Binder IPC 通信
-- 1 当应用程序需要访问系统服务（如 ActivityManager、PackageManager、WindowManager 和 ContentProvider等）时，会通过 Binder 机制与系统服务进行通信
-    - ActivityManager.getService 获取 ActivityManagerService 实例
-    - Context.getContentResolver 获取 ContentResolver 实例
-- 2 startActivity、startService、bindService 和 registerReceiver 等方法会涉及与系统的 ActivityManagerService 等服务进行 Binder 通信
-- 3 通过 ContentResolver.query 等方法查询数据时，会与对应的 ContentProvider 进行 Binder 通信以获取数据
-- 4 生命周期回调，比如 onCreate , onStart , onResume 等
-- 5 插件化框架中的通信应用
-- 6 AIDL 就是通过 binder 实现跨进程通信
-
-
-
-
-##  !!!!!!JobScheduler
-
-
-##  !!!!!!后台任务解决方案
-- 如果是一个长时间的 http 下载的话就使用 DownloadManager
-- 否则的话就看是不是一个可以延迟的任务，如果不可以延迟就直接使用 Foreground service
-- 如果可以延迟的话就看是不是可以由系统条件触发，如果是的话就使用 WorkManager
-- 如果不是就看是不是需要在一个固定的时间执行这个任务，如果是的话就使用 AlarmManager
-- 如果不是的话就还是使用 WorkManager
-- 
-
-
-
-
-Gradle的实现，gradle中task的生命周期
-
-
-WebSocket与socket的区别？
-
-vm的运行时数据结构。栈帧中会有什么异常？方法区里面存放的是什么数据
-
-插件化原理
-Android 插件化原理
-
-利用 ContentProvider 实现初始化 library 获取 Context
-
-
-
-
-## Google Volley
-- https://github.com/google/volley
-- https://developer.android.google.cn/training/volley
-
-## Google Guava
-- https://github.com/google/guava
-
-## Square Picasso
-- https://github.com/square/picasso
-- https://square.github.io/picasso
-
-
-## Square Okio2
-- https://github.com/square/okio
-- https://square.github.io/okio
-
-
-
-
-# EventBus 3.1.1 源码解析
-https://dev-xu.cn/posts/1a3301f8.html
-
-
-
-
-# Android 知识点
-
-
-
-
-
-
-
-# Android
-
-- 
-
-
-
-## Android 消息机制
-
+## Handler 消息机制
 - Android 的消息机制在 Java 层及 Native 层均是由 Handler、Looper、MessageQueue 三者构成
-
 Android 消息机制是 Android 系统提供一套消息机制，主要是用于实现线程切换，能够让子线程间接的去访问 UI 控件
-
-
+Handler 消息机制的原理
+- 子线程中创建 Handler
+- Handler post 方法原理
+- HandlerThread
 
 ### Handler 是什么？
-
 Handler 消息处理器，既是消息发送者也是消息处理者，Handler 发消息到 MessageQueue 消息队列里，而消息队列中的 Message 消息中存放着的 Handler 引用，在分发消息的时候会将消息分发到该 Handler 的dispatchMessage 里进行处理
 
 
@@ -169,7 +82,7 @@ public static void main(String[] args) {
         prepare(false);
         synchronized (Looper.class) {
             if (sMainLooper != null) {
-                //只能创建一次，主线程有且仅有一个 Loooper
+                //只能创建一次，主线程有且仅有一个 Looper
                 throw new IllegalStateException("The main Looper has already been prepared.");
             }
             sMainLooper = myLooper();
@@ -181,30 +94,6 @@ public static void main(String[] args) {
 ### Handler 是什么？作用是什么？
 
 消息处理器，系统提供一套消息机制实现线程切换，能够让子线程间接的去访问 UI 控件
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ActivityThread#main 函数中会调用 Looper.prepare 方法创建一个 Looper , 其构造方法创建了一个 MessageQueue
@@ -300,65 +189,75 @@ ViewRootImpl.scheduleTraversals方法就使用了同步屏障，保证UI绘制�
 
 
 
-## Activity
+## Binder IPC 进程间通信
+### Linux 进程间通信方式：管道 消息队列 共享内存 套接字 信号量
 
-### Activity 启动模式
+### !!!!Binder IPC 通信大概分了几层
+一、Java 层：供应用程序开发者使用的 Java 接口层，通过这一层可以方便地进行进程间通信。
+二、Native 层 JavaBBinder 和 BpBinder：Native 层中，，用于实现 Java 层与内核层之间的通信转换。
+三、Native 层 Binder 驱动：。
+四、服务端和客户端通信层：服务端实现具体的服务逻辑并通过 Binder 机制提供给客户端调用，客户端通过 Binder 代理与服务端进行通信。
 
-1 standard 标准模式
-
-2 singleTop 栈顶复用模式  （例如：通知栏推送点击消息界面）
-
-3 singleTask 栈内复用模式 （例如：首页）
-
-4 singleInstance 单例模式  （单独位于一个任务栈中，例如：拨打电话界面）
-
-
-
+Framework 框架层：这一层主要包含Java Binder和JNI（Java Native Interface）部分，用于上层应用程序与Binder框架的交互。
+Native 层：创建 Service Manager 以及 BBinder、BpBinder 模型，负责实际的 IPC 通信过程，Java 层的 Binder 对象对应 Native 层的 JavaBBinder 对象，Java 层的 BinderProxy 对象对应 Native 层的 BpBinder 对象
+Kernal 层：对应就是 Binder 驱动，位于 Linux 内核中，负责处理进程间通信的底层实现，管理 Binder 实体对象和引用，以及处理进程间的数据传输和同步等操作
 
 
-### Activity 初始化流程
-
-ActivityThread#startActivityNow
-ActivityThread#handleLaunchActivity 处理Activity启动
-
-- ActivityThread#performLaunchActivity 完成Activity启动  -> Activity#onCreate
-- Instrumentation#newActivity 实例化Activity
-- AppComponentFactory#instantiateActivity App组件工厂实例化Activity
-- ClassLoader#loadClass 类加载器
-实例化后会调用 Activity#attach 继续进行初始化
-
-ActivityThread#performResumeActivity -> Activity#onResume
+### 哪些场景会涉及到 Binder IPC 通信
+- 1 当应用程序需要访问系统服务（如 ActivityManager、PackageManager、WindowManager 和 ContentProvider等）时，会通过 Binder 机制与系统服务进行通信
+    - ActivityManager.getService 获取 ActivityManagerService 实例
+    - Context.getContentResolver 获取 ContentResolver 实例
+- 2 startActivity、startService、bindService 和 registerReceiver 等方法会涉及与系统的 ActivityManagerService 等服务进行 Binder 通信
+- 3 通过 ContentResolver.query 等方法查询数据时，会与对应的 ContentProvider 进行 Binder 通信以获取数据
+- 4 生命周期回调，比如 onCreate , onStart , onResume 等
+- 5 插件化框架中的通信应用
+- 6 AIDL 就是通过 binder 实现跨进程通信
 
 
+
+
+##  !!!!!!JobScheduler
+
+
+##  !!!!!!后台任务解决方案
+- 如果是一个长时间的 http 下载的话就使用 DownloadManager
+- 否则的话就看是不是一个可以延迟的任务，如果不可以延迟就直接使用 Foreground service
+- 如果可以延迟的话就看是不是可以由系统条件触发，如果是的话就使用 WorkManager
+- 如果不是就看是不是需要在一个固定的时间执行这个任务，如果是的话就使用 AlarmManager
+- 如果不是的话就还是使用 WorkManager
+- 
+
+## 组件化
+
+
+## 插件化
+
+
+
+Gradle的实现，gradle中task的生命周期
+WebSocket与socket的区别？
+vm的运行时数据结构。栈帧中会有什么异常？方法区里面存放的是什么数据
+利用 ContentProvider 实现初始化 library 获取 Context
+
+
+ 
 
 ### View 绘制入口
-
 ActivityThread#attach
-
 初始化 mWindow
-
 创建顶层布局容器 DecorView 添加到 Window
-
 创建ViewRootImpl 建立 WindowManager和DecorView之间的连接
-
 ViewRootImpl的performTraversals
-
 performMeasure、performLayout、performDraw
-
 依次执行 measure、layout、draw 三大流程
-
 measure用来对View进行测量
-
 layout 负责将子元素在父元素中的位置即真实宽高以及四个顶点位置
-
 draw 负责将View绘制出来
 
 
 
 ### View 初始化
-
 Activity#setContentView
-
 - PhoneWindow#setContentView
 - PhoneWindow#installDecor 
 - PhoneWindow#generateDecor 初始化 DecorView
@@ -366,7 +265,6 @@ Activity#setContentView
 
 
 ### View 绘制流程
-
 View的绘制从ActivityThread类中Handler的处理RESUME_ACTIVITY事件开始，在执行performResumeActivity之后，创建Window以及DecorView并调用WindowManager的addView方法添加到屏幕上，addView又调用ViewRootImpl的setView方法，最终执行performTraversals方法，依次执行performMeasure，performLayout，performDraw。也就是view绘制的三大过程。
  measure过程测量view的视图大小，最终需要调用setMeasuredDimension方法设置测量的结果，如果是ViewGroup需要调用measureChildren或者measureChild方法进而计算自己的大小。
  layout过程是摆放view的过程，View不需要实现，通常由ViewGroup实现，在实现onLayout时可以通过getMeasuredWidth等方法获取measure过程测量的结果进行摆放。
@@ -375,7 +273,6 @@ View的绘制从ActivityThread类中Handler的处理RESUME_ACTIVITY事件开始�
 
 
 ### ViewRootImpl
-
 建立 DecorView 和 Window 之间的联系
 
 invaliate
@@ -383,7 +280,6 @@ invaliate
 
 
 ### 触发 View（DecorView） 第一次绘制的流程
-
 ActivityThread#handleResumeActivity
 ActivityThread#performResumeActivity
 获取 ViewManager（getWindowManager 转化来的，ViewManager是一个接口，这里其实是 WindowManagerImpl ，就是上文【PhoneWindow 初始化】里创建的）
@@ -400,7 +296,6 @@ ViewRootImpl是WindowManager和DecorView之间的桥梁，measure测量，layout
 
 
 ### requestLayout 流程
-
 上文提到 requestLayout 那么说下它的流程
 View#requestLayout
 ViewParent#requestLayout
@@ -468,58 +363,28 @@ dispatchDraw 绘制子 View
 
 
 
-### Activity 启动流程
-
-startActivity最终都会调用startActivityForResult，通过ActivityManagerProxy调用system_server进程中ActivityManagerService的startActvity方法，如果需要启动的Activity所在进程未启动，则调用Zygote孵化应用进程，进程创建后会调用应用的ActivityThread的main方法，main方法调用attach方法将应用进程绑定到ActivityManagerService（保存应用的ApplicationThread的代理对象）并开启loop循环接收消息。ActivityManagerService通过ApplicationThread的代理发送Message通知启动Activity，ActivityThread内部Handler处理handleLaunchActivity，依次调用performLaunchActivity，handleResumeActivity（即activity的onCreate，onStart，onResume）
-
-
-
-
-
-
-
 
 
 ### 获取 LayoutInflater 实例的方式
-
 - LayoutInflater 布局解析器，用于解析布局文件后动态生成 View
-
 - 是一个抽象类
-
 - 是一个系统服务
-
-
-
 1 Context#getSystemService
-
 2 LayoutInflater#from
-
 3 Activity#getLayoutInflater
-
-
-
 三种获取实例的方法最终都是通过 Context#getSystemService 方法实现的，里面涉及到单例模式
-
 Activity#setContentView 方法内部也用到了 LayoutInflater 进行布局解析
-
 LayoutInflater 内部采用了 org.xmlpull 解析器实现 xml 解析
 
 
 
 ### LayoutInflater#inflate 的流程
-
 - 有一个 View#inflate 方法，就是调用 LayoutInflater#inflate 两个参数的方法
-
   内部会自动 addView 所以不适合用在 Adapter 和加载 Fragment 布局等情况
-
 1 LayoutInflater 有四个重载方法，其中两个针对 xml 布局，另外两个是针对现成的 XmlResourceParser
-
 2 如果是 xml 布局文件，可以通过 Resources#getLayout 把 xml 布局文件解析加载得到 XmlResourceParser
-
 3 因为 XmlResourceParser 包含属性信息，所以利用 Xml#asAttributeSet 将其转化成 AttributeSet 供后续使用
-
 4 通过 advanceToRootNode 方法找到根标签，如遇到的不是 <merge/> 标签就通过 createViewFromTag 方法把根标签对应类通过反射的方式创建出来，然后调用 rInflateChildren 方法，而它就是调用了 rInflate 方法，从而实现了递归，而 rInflate 内部也调用了 createViewFromTag ，所以用递归调用的方式把子 View 一个个创建出来并通过 addView 加入其父 View 中，如遇到 <merge/> 标签就直接调用 rInflate 先进行处理一次，最终形成一个视图树
-
 5 整个流程中还涉及到反射、ClassLoader、换肤等知识点可以展开
 
 
@@ -547,17 +412,11 @@ mContentRoot(LinearLayout) -> mContentParent(FrameLayout) ->  Custom Layout View
 
 
 #### 流程
-
 1 每个 Activity 都包含一个 Window ，而 Window 是抽象类，PhoneWindow 是他的唯一继承实现类，Activity#attach 里初始化 PhoneWindow
-
 2 Activity#setContentView 直接调用 PhoneWindow#setContentView 方法
-
 3 PhoneWindow 又包含了一个 DecorView ，是继承自 FrameLayout  ，作为界面的根布局，在 PhoneWindow#installDecor 中的 PhoneWindow#generateDecor 进行初始化
-
 4 通过主题样式确定加载哪个系统的 xml 文件作为 DecorView 的子布局 mContentRoot，默认是 screen_simple.xml ，根节点是 LinearLayout，在 DecorView#onResourcesLoaded 里进行 xml 解析
-
 5 screen_simple.xml 包括一个 actionBar 标题栏 ViewStub，和一个带系统 id 的 @android:id/content 的 FrameLayout，代码对应 mContentParent，作为加载布局的容器，在 PhoneWindow#generateLayout 中初始化
-
 6 然后内部也是用 LayoutInflater#inflate 通过 LoadXmlResourceParser 把 xml 布局解析成 View
 
 ## fixme
@@ -567,27 +426,20 @@ mContentRoot(LinearLayout) -> mContentParent(FrameLayout) ->  Custom Layout View
 
 
 ### Window
-
 - 是一个抽象类，唯一继承实现类是 PhoneWindow
-
 - 描述一个窗口，是一种抽象概念，不是真实存在的，Window 实例也是以 View 的形式存在的
-
 - Window 包含 View，对 View 进行管理
 
 
 
 ### WindowManager
-
 - 是一个接口类，继承 ViewManager 接口，实现类是 WindowManagerImpl
-
 - 对 Window 进行管理，包括增加、更新、删除操作（定义在 ViewManager 里）
-
 - WindowManagerImpl 方法内部又是调用 WindowManagerGlobal 的方法的，涉及到桥接模式的知识
 
 
 
 ### WMS 作用
-
 - WindowManager 具体的操作都通过 WMS 处理实现的，所以 WMS 主要功能是 View 的最终管理者
 - 和 WindowManager 之间是通过 Binder 实现跨进程通信的
 - WMS 负责窗口管理，关联 WindowManager
@@ -598,13 +450,11 @@ mContentRoot(LinearLayout) -> mContentParent(FrameLayout) ->  Custom Layout View
 
 
 ### Window、WindowManager、WMS 之间的关系
-
 Window 包含并管理 View，WindowManager 管理 Window，WindowManager 的操作通过 WMS 实现的
 
 
 
 ### Window 的类型
-
 Application Window 应用程序窗口
 
 - 如 Activity
@@ -620,19 +470,14 @@ System Window 系统窗口
 
 
 ### PhoneWindow
-
 1 每个 Activity 都包含一个 Window ，而 PhoneWindow 是 Window 的唯一继承实现类
-
 2 Activity 的展示界面的特性是通过 Window 对象来处理的
-
 3 提供了一系列绘制窗口的方法，如设置背景、标题
-
 4 是 Activity 和 View 交互的桥梁
 
 
 
 ### PhoneWindow 初始化
-
 上文 【Activity 初始化流程】提到了
 ActivityThread#performLaunchActivity 实例化 Activity 后会调用
 Activity#attach 
@@ -643,19 +488,14 @@ Activity#attach
 
 
 #### DecorView
-
 1 作为整个应用窗口(Activity界面)的顶层布局容器，可以说是所有 View 的 parent view 
-
 2 是 Android 最基本的窗口系统
-
 3 继承自 FrameLayout，就是对 FrameLayout 进行功能的修饰
-
 4 将要显示的具体内容呈现在 PhoneWindow 上
 
 
 
 ### Activity、Window 、View 之间的关系
-
 一个 Activity 对应一个 Window，也就是 PhoneWindow ，在 PhoneWindow 中有一个 DecorView，在setContentView 中会将 layout 填充到这个 DecorView 中
 
 
@@ -745,21 +585,19 @@ OnTouchListener -> OnTouchEvent -> OnClick
 
 
 
-## 启动流程
-
 ### Android 系统启动流程
-
 ```
-接通电源，按下启动按钮
-ROM 中引导芯片代码开始执行
-加载 BootLoader 到 RAM 执行
-BootLoader 负责拉起系统 OS
-Linux 内核启动，完成系统设置，查找 init.rc 文件，启动 init 进程
+接通电源，按下启动按钮，ROM 中的引导芯片代码开始执行，会加载 BootLoader 到 RAM 中执行
+BootLoader 引导程序负责拉起操作系统，引导完后 Linux 内核启动进行加载驱动和启动系统服务等系统设置，查找 init.rc 文件，启动 Init 进程
 初始化和启动属性服务，启动 Zygote 进程
-创建 Java 虚拟机并注册 JNI 方法，创建名为"zygote"的 Server Socket，启动 SystemServer 进程
-创建 Binder 线程池和 SystemServiceManager,启动各种系统服务
+创建 Java 虚拟机并注册 JNI 方法，创建名为 "zygote" 的 Server Socket，启动 SystemServer 进程
+创建 Binder 线程池和 SystemServiceManager，启动各种系统服务
 启动 Launcher ，显示已安装 APP 列表
 ```
+
+
+
+
 
 
 
@@ -902,12 +740,12 @@ AllAppsContainerView#onFinisnInflate
 应用程序启动的条件是应用程序进程是否已经启动，而 AMS 在启动应用程序的时候会先检查这个应用程序需要的应用程序进程是否已经启动，如未启动则会请求 Zygote 进程去先启动这个应用程序进程
 
 ```
-========================= AMS 发送请求到 Zygote =================================
+=================== AMS 发送请求到 Zygote ==================
 AMS 利用 ActivityManagerService#startProcessLocked 方法通过建立 Socket 连接发送请求给 Zygote 进程，提供一个app 的uid 和 entryPoint="android.app.ActivityThread"，他就是应用程序进程主线程的类名
 - Process#start 尝试启动进程
 -- 调用 ZygoteProcess#start
 --- ZygoteProcess#startViaZygote
-========================= Zygote 处理 AMS 请求 ==================================
+=================== Zygote 处理 AMS 请求 ==================
 Zygote 进程在 ZygoteServer#runSelectLoop 方法下等待 AMS 的请求
 然后利用 Zygote#forkAndSpecialize 方法 fork 方式创建应用程序进程
 接着调用 ZygoteConnection#handeChildProc
@@ -946,15 +784,18 @@ Zygote 进程在 ZygoteServer#runSelectLoop 方法下等待 AMS 的请求
 - 这个 ProcessRecord 就是需要传入的要启动 Activity 所在的应用程序进程
 走到后面如果这个 ProcessRecord 为 null，表示应用程序进程未启动，那么走 ActivityManagerService#startProcessLocked 通知 Zygote 去启动该应用程序进程，上文【应用程序进程启动流程】提到的知识得到印证了
 ProcessRecord 不为空的话经过一系列调用会到 ActivityThread$ApplicationThread.thread.scheduleLaunchActivity
+
 小结一下：
 1 Launcher 点击， 通过 AIDL ，Binder 通信方式到 AMS
 2 而 AMS 是在 SystemServer 进程中的
 3 AMS 想调用 ActivityThread$ApplicationThread 的方法
 4 如果 ActivityThread$ApplicationThread 所在进程（应用程序进程）未启动，AMS 通过 socket 方式通知 Zygote 进程去完成对应进程的创建
 5 如果已经创建了，则 AMS 通过 Binder 方式和 ActivityThread$ApplicationThread 所在进程进行通信，请求启动根 Activity
+
 回到 scheduleLaunchActivity 继续
 ActivityThread#sendMessage 通过 Handler 调用 H#sendMessage 方式发送通知启动对应 Activity
 通过 Handler 的回调 H#handleMessage 方法处理调用 ActivityThread#handleLaunchActiviy 接下来的逻辑就比较基础了，是不是很熟悉？
+
 - ActivityThread#performLaunchActivity 内部创建 Activity 的 Context ,利用类加载器通过 Instrumentation#newActivity 创建对应 Activity 的实例,也创建了 Application
 -- Activity#attach 内部创建了 PhoneWindow 
 -- Instrumentation#callActiviyOnCreate
@@ -964,13 +805,9 @@ ActivityThread#sendMessage 通过 Handler 调用 H#sendMessage 方式发送通�
 ```
 
 启动流程涉及到 4 个进程：
-
 Launcher 进程点图标请求 AMS 所在进程 SystemServer 进程请求启动应用程序根 Activity
-
 AMS 判断该应用程序的应用程序进程是否已经启动
-
 如果未启动则 AMS 通知请求 Zygote 进程先去创建并启动这个应用程序进程
-
 应用程序进程启动后的逻辑就是 AMS 通知应用程序进程里的 ActivityThread$ApplicationThread 启动根 Activity
 
 
@@ -1023,7 +860,6 @@ AMS 判断该应用程序的应用程序进程是否已经启动
 ## RecyclerView 
 
 ### RecyclerView 和 ListView 的区别
-
 - RecyclerView 原生支持纵向、横向和瀑布流等布局，ListView 只支持纵向布局
 - RecyclerView 利用 ItemDecoration 实现分割线，较灵活，ListView 利用 android:divider
 - RecyclerView 自带 ViewHolder 机制，ListView 不强制要求实现 ViewHolder 机制
@@ -1032,28 +868,18 @@ AMS 判断该应用程序的应用程序进程是否已经启动
 - RecyclerView 自带拖拽、侧滑接口
 - RecyclerView 未实现头尾视图、空视图和 Item 点击事件
 - RecyclerView 改进了缓存机制，有四级缓存
-- RecyclerView  可扩展性强
+- RecyclerView 可扩展性强
 
 
 
 ### RecyclerView 缓存机制
-
 四级缓存：
-
 mChangedScrap
-
 mAttachedScrap、mHiddenViews、mCachedViews
-
 ViewCacheExtension 自定义缓存
-
 RecycledViewPool 需要重新绑定数据
 
-
-
-
-
 ### DiffUtil
-
 - 实现 DiffUtil#Callback 定义新旧数据以及 Item 数据的比较规则
 - 通过 DiffUtil#calculateDiff 计算得到 DiffResult （推荐放在子线程）
 - 利用 DiffResult#dispatchUpdatesTo 通知刷新
@@ -1065,18 +891,14 @@ RecycledViewPool 需要重新绑定数据
 
 
 ### 已经有 Adapter#notifyItemXXX 局部刷新了为啥还要有 DiffUtil 工具类？
-
 - DiffUtil 最终也是调用 Adapter#notifyItemXXX 局部刷新方法进行刷新，只是工具类帮你计算了，不需要自己去计算维护哪些 position 需要刷新
-
 - 如果只改变了个别 Item ，那么直接调用 Adapter#notifyItemXXX 即可，那就没必要用 DiffUtil 了
-
 - DiffUtil 设计不单单是只能和 RecyclerView 一起使用，只要实现 ListUpdateCallback 接口的都可以用它来计算新旧数据集差异
 
 
 
 
 ### AsyncListDiff
-
 - 通过 XxxAdapter 封装 AsyncListDiffer 进行使用，内部实现在子线程中执行 DiffUtil#calculateDiff  方法
 - 实现 DiffUtil#ItemCallback 定义 Item 数据的比较规则，内部自行维护了新旧数据集
 - 利用 AsyncListDiff#submitList 进行数据更新，同时自动完成刷新
@@ -1084,7 +906,6 @@ RecycledViewPool 需要重新绑定数据
 
 
 ### 已经有 DiffUtil  了为啥还要 AsyncListDiff ？
-
 - 无需自行维护新旧数据集，解决了 Adapter 与 DiffUtil 的数据引用的一致性问题和数据引用传递问题
 - 内部已经实现了通过子线程进行差异计算，解决了主线程阻塞问题
 - 调用数据更新的时候会自动刷新接口，避免遗忘
@@ -1094,11 +915,9 @@ RecycledViewPool 需要重新绑定数据
 
 
 ### androidx.recyclerview.widget.ListAdapter
-
 - 可以让 XxxAdapter 直接继承 ListAdapter ，简化了 AsyncListDiff 【通过 XxxAdapter 封装 AsyncListDiffer 进行使用】这一步骤
 
 按顺序选型：
-
 Adapter#notifyDataSetChanged -> 尽量选用局部刷新 Adapter#notifyItemXXX -> 数据集变化较复杂就用 DiffUtil 配合处理 -> 数据集较大可以选用 AsyncListDiffer 处理 -> 不想封装 Adapter 就直接继承 ListAdapter 处理
 
 
@@ -1106,7 +925,6 @@ Adapter#notifyDataSetChanged -> 尽量选用局部刷新 Adapter#notifyItemXXX -
 
 
 ### ViewHolder
-
 主要解决了 ItemView 复用的问题，减少重复 findViewById 的消耗
 
 
@@ -1114,7 +932,6 @@ Adapter#notifyDataSetChanged -> 尽量选用局部刷新 Adapter#notifyItemXXX -
 ## 缓存机制
 
 ### 三级缓存
-
 内存、硬盘、网络
 
 
@@ -1124,7 +941,6 @@ Adapter#notifyDataSetChanged -> 尽量选用局部刷新 Adapter#notifyItemXXX -
 
 
 ### LRU 缓存
-
 LRU ：最近最少使用
 
 
@@ -1154,7 +970,6 @@ LRU ：最近最少使用
 ### App Startup
 
 很多三方库都用 ContentProvider 的小技巧进行 library 的初始化，如 LeakCanary
-
 那如果大家都用这种方式的话，那就要初始化很多 ContentProvider ，一定程度上会影响性能，官方就出了这个，为了就是让所以类似需求统一到一个 ContentProvider 里去初始化
 
 
@@ -1163,7 +978,7 @@ LRU ：最近最少使用
 
 ## 框架
 
-### 使用 mvp 时遇到的坑
+ 
 
 
 
@@ -1346,27 +1161,9 @@ Object Query Language
 
 
 #### Fragment如果在Adapter中使用应该如何解耦？
-
-
-
-
-
 #### 设计一个音乐播放界面，你会如何实现，用到那些类，如何设计，如何定义接口，如何与后台交互，如何缓存与下载，如何优化？
-
-
-
 #### 从0设计一款App整体架构，如何去做？
-
-
-
-
-
 #### 项目框架里有没有Base类，BaseActivity和BaseFragment这种封装导致的问题，以及解决方法？
-
-
-
-
-
 #### 实现一个库，完成日志的实时上报和延迟上报两种功能，该从哪些方面考虑？
 
 
@@ -1374,60 +1171,14 @@ Object Query Language
 
 
 安全问题
-
 Android与服务器交互的方式中的对称加密和非对称加密是什么?
-
 对于Android 的安全问题，你知道多少
 
 
 
 
 
-### 安卓各版本大变化
 
-Android 5.0
-
-Material Design
-ART虚拟机
-Android 6.0
-
-应用权限管理
-官方指纹支持
-Doze电量管理
-运行时权限机制->需要动态申请权限
-Android 7.0
-
-多窗口模式
-支持Java 8语言平台
-需要使用FileProvider访问照片
-安装apk需要兼容
-Android 8.0
-
-通知,渠道->适配
-画中画
-自动填充
-后台限制
-自适应桌面图标->适配
-隐式广播限制
-开启后台Service限制
-Android 9.0
-
-利用 Wi-Fi RTT 进行室内定位
-刘海屏 API 支持
-多摄像头支持和摄像头更新
-不允许调用hide api
-限制明文流量的网络请求 http
-Android 10
-
-暗黑模式
-隐私增强(后台能否访问定位)
-限制程序访问剪贴板
-应用黑盒
-权限细分需兼容
-后台定位单独权限需兼容
-设备唯一标示符需兼容
-后台打开Activity 需兼容
-非 SDK 接口限制 需兼容
 
 
 

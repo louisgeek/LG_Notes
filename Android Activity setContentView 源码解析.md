@@ -1,7 +1,7 @@
+# Android Activity setContentView 源码解析
 > 源码基于 Android 11 API 30
 
 # Activity#setContentView
-
 - Activity 创建于 ActivityThread#performLaunchActivity 方法,会调用 Activity#attach 方法
 
 ```java
@@ -55,22 +55,14 @@ public class Activity extends ContextThemeWrapper
 ```
 
 - Activity  负责容器的生命周期及活动，包含一个 Window，一个 Activity 对象对应一个 Window 对象
-
 - Window 是一个抽象类，负责窗口管理，提供了一系列绘制窗口的方法
-
 - Window 是 Activity 和 View 交互的桥梁，PhoneWindow 是 Window 的唯一具体继承实现类
-
 - Activity#setContentView 实际是通过 PhoneWindow#setContentView 来处理逻辑的
-
 - PhoneWindow 对象在 Activity#attach 方法中被初始化创建，在 onCreate 方法之前
-
 - Activity 的展示界面的特性是通过 Window 对象来处理的
 
   
-
-
 ## 1 PhoneWindow#setContentView
-
 ```java
     @Override
     public void setContentView(int layoutResID) {
@@ -143,15 +135,11 @@ public class Activity extends ContextThemeWrapper
 ```
 
 1 PhoneWindow#installDecor 初始化 DecorView、mContentParent
-
 2 如果有转场动画，就处理转场动画，否则直接将 setContentView 传入要显示的 layout 布局(布局加载器解析布局文件转换为 View 树)或者 View 添加到 mContentParent(ViewGroup) 中
-
 3 通知 Callback(Activity) 调用 onContentChanged 方法
 
 
-
 ### 1.1 PhoneWindow#installDecor
-
 ```java
 public class PhoneWindow extends Window implements MenuBuilder.Callback {
    //DecorView 作为整个应用所有窗口(Activity界面)的根 View 
@@ -315,13 +303,11 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 - mContentParent 里的子 View 就是 setContentView 时候传入的
 
 1 创建 DecorView ，mDecor = generateDecor(-1)  
-
 2 创建 mContentParent ，mContentParent = generateLayout(mDecor) 
 
 
 
 #### 1.1.1 PhoneWindow#generateDecor
-
 ```java
 protected DecorView generateDecor(int featureId) {
         // System process doesn't have application context and in that case we need to directly use
@@ -354,7 +340,6 @@ protected DecorView generateDecor(int featureId) {
 
 
 ##### DecorView
-
 - DecorView 将要显示的具体内容呈现在 PhoneWindow 上
 - DecorView 继承自 FrameLayout，就是对 FrameLayout 进行了功能的修饰
 - 作为整个应用窗口(Activity界面)的根 View，可以说是所有 View 的 parent view ，是 Android 最基本的窗口系统
@@ -374,7 +359,6 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
 
 #### 1.1.2 PhoneWindow#generateLayout
-
 ```java
  protected ViewGroup generateLayout(DecorView decor) {
         // Apply data from current theme.

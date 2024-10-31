@@ -4,7 +4,7 @@
 
 
 
-从 Launcher 点击 APP 图标启动应用 
+
 
 
 
