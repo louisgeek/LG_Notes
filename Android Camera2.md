@@ -6,14 +6,14 @@
 - Camera2 支持连拍
 
 组件包括如下：
-- CameraManagr 相机管理器，可以获取可用的相机列表以及去打开指定的相机
+- CameraManager 相机管理器，可以获取可用的相机列表以及去打开指定的相机
 - CameraDevice 相机设备（类似以前的 Camera），可以用于创建 CameraCaptureSession 和 CaptureRequest
 - CameraCaptureSession 相机捕捉会话，可以配合 CaptureRequest 去实现预览
 - CaptureRequest 捕获请求，可以设置 Surface（来自 TextureView 或 SurfaceView）
 - ImageReader 可以用来获取预览帧数据，是使用 ImageReader 提供的 Surface，再通过监听获取图像信息
 
 ## 使用步骤
-1. 通过获取 CAMERA_SERVICE 系统服务获取到 CameraManagr
+1. 通过获取 CAMERA_SERVICE 系统服务获取到 CameraManager
 2. 利用 CameraManager#getCameraIdList 获取设备可用的 cameraId，利用 CameraManager#getCameraCharacteristics 传入指定相机的 cameraId 获取到这个相机的 CameraCharacteristics 相机特征（类似以前的 Camera 的 CamerInfo 和 Parameters）
 3. 通过 CameraManager#openCamera 方法打开相机，并设置 CameraDevice.StateCallback 回调，回调成功后就获得了打开成功的 CameraDevice 相机设备
 4. 当 CameraDevice 相机打开成功后，就可以通过 CameraDevice#createCaptureSession 传入 surfaceList 集合和 CameraCaptureSession.StateCallback 回调来创建 CameraCaptureSession 相机捕捉会话

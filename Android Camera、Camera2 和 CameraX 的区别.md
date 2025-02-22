@@ -7,7 +7,7 @@
 
 
 ## Camera
-出来就是 NV21
+默认出来的数据就是 NV21
 
 ## Camera2
 出来的是 Image 对象，可以先设置类型然后通过 getPlanes 方法得到 JPEG 或者 YUV_420_888
