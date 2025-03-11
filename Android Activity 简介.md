@@ -45,9 +45,9 @@
 
 隐式启动和显示启动Activity的方式
 
-Activity常用的标记位Flags
+Activity 常用的标记位Flags
 
-Activity之间如何通信
+Activity 之间如何通信
 
 [startActivity()干了什么？](https://www.jianshu.com/p/89fd44083c1c)
 
@@ -55,19 +55,23 @@ Activity之间如何通信
 
 在Activity进行配置时，catrgory和action的区别是什么
 
+
+
 了解scheme跳转协议吗？谈一谈
+
+
 
 给Activity设置进入和退出的动画
 
+
+
 使用Intent传递数据是否有限制 & 如果传递一个复杂的对象，例如一个复杂的控件对象应该怎么做
 
-[setContentView干了什么](https://www.jianshu.com/p/d9d919608842)
+ 
 
-可以多次调用setContentView方法吗？说说不同时机第二次调用setContentView会发生什么
 
-onNewIntent()方法的认识？
 
-你对Activity的Context的认识
+
 
 Application中获取当前Activity实例
 
@@ -75,7 +79,7 @@ Activity进程优先级
 
 出现ANR的条件有哪些 & 解决方案
 
-Activity什么时候加载布局文件的？什么开始进行UI绘制？
+Activity 什么时候加载布局文件的？什么开始进行UI绘制？
 
 
 
@@ -83,11 +87,11 @@ Activity什么时候加载布局文件的？什么开始进行UI绘制？
 
 ----
 
-分别在Activity里每一个生命周期函数里调用finish方法后，接下来Activity的生命周期如何回调
+
 
 有什么方法可以启动一个没有在AndroidManifest.xml中注册过的Activity
 
-activity中分别在onCreate，onStart，onResume中调用finish后的生命周期如何回调？
+
 
 
 
