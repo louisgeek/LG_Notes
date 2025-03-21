@@ -281,11 +281,11 @@ implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 
 ## 总结
 
-底层是数组实现，初始大小为 10
+
 
 由于利用数组本身实现增删元素操作比较麻烦，而 ArrayList 的实现恰恰可以看成是对数组操作的一种封装
 
-没有同步逻辑，不能保证线程安全
+
 
 插入时会判断数组容量是否足够，不够的话会进行扩容,每次扩容的容量是当前的1.5倍
 
@@ -294,11 +294,11 @@ implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 
 
 
-Vector
 
-CopyOnWriteArrayList
 
-synchronizedList
+
+
+
 
 
 
