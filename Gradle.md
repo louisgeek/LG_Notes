@@ -1,4 +1,0 @@
-```
-gradlew -q app:dependencies
-```
-
