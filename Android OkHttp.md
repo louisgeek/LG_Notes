@@ -1,19 +1,17 @@
 ## OkHttp  
-
-- 功能全面，满足了绝大部分网络请求的需求
 - 内置 ConnectionPool 连接池来复用连接以提高效率
-- 默认支持 gzip 压缩来降低传输内容的大小
+- 默认支持 Gzip 压缩来降低传输内容的大小
+- 使用 Gzip 压缩请求和响应数据，减少传输数据量
 - 提供了对 HTTP 响应的缓存机制，可以避免不必要的网络请求
 - 支持最新的 HTTP 协议版本 HTTP/2 和 SPDY
 - 网络出现问题时，OkHttp 会自动重试一个主机的多个 IP 地址
 - 拦截器模式的设计使其非常方便得进行功能扩展
-
+- 可以通过 Interceptor 拦截器实现重试机制
 
 
 
 
 ## 使用
-
 - 采用了建造者模式
 
 ```java
@@ -21,9 +19,16 @@ OkHttpClient okHttpClient = OkHttpClient.Builder().build();
 Request request = new Request.Builder().url(mUrl).build();
 //Call 是接口，实现类是 RealCall
 Call call = okHttpClient.newCall(request);
-//同步请求，需要放到子线程里调用
+```
+
+同步请求
+```java
+//需要放到子线程里调用
 Response response = call.execute();
-//异步请求
+```
+
+异步请求
+```java
 call.enqueue(new Callback() {
     @Override
     public void onFailure(Call call, IOException e) {
