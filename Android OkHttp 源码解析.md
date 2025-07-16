@@ -12,7 +12,7 @@
 
 ```java
 public OkHttpClient() {
-    //�޲ι�����൱�ڴ�����һ���� Builder ����
+    //无参构造就相当于创建了一个空 Builder 对象
     this(new Builder());
 }
 
@@ -75,7 +75,7 @@ OkHttpClient(Builder builder) {
 public Builder newBuilder() {
     return new Builder(this);
 }
-//��̬�ڲ���
+//静态内部类
 public static final class Builder {
    ...
 }
@@ -88,7 +88,7 @@ public static final class Builder {
 ## okhttp3.OkHttpClient#newCall
 
 ```java
-//������
+//调度器
 final Dispatcher dispatcher;
 final List<Interceptor> interceptors;
 final List<Interceptor> networkInterceptors;
@@ -170,20 +170,20 @@ static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolea
 //
 /** Executes calls. Created lazily. */
 private @Nullable ExecutorService executorService;
-//�첽������Ĵ�ִ�ж���
+//异步步请求的待执行队列
 /** Ready async calls in the order they'll be run. */
 private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
-//�첽���������ִ�ж���
+//异步请求的正在执行队列
 /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
 private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>();
-//ͬ�����������ִ�ж���
+//同步请求的正在执行队列
 /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
 private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
 
 /** Used by {@code Call#execute} to signal it is in-flight. */
 synchronized void executed(RealCall call) {
-   //���� 
-   //����ͬ�����������ִ�ж���
+   //加锁 
+   //加入同步请求的正在执行队列
    runningSyncCalls.add(call);
 }
 ```
@@ -201,11 +201,11 @@ synchronized void executed(RealCall call) {
   private <T> void finished(Deque<T> calls, T call) {
     Runnable idleCallback;
     synchronized (this) {
-      //�Ƴ�����
+      //移出队列
       if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
       idleCallback = this.idleCallback;
     }
-	//�����漰�첽��ʱ��ϸ˵
+	//后面涉及异步的时候细说
     boolean isRunning = promoteAndExecute();
 
     if (!isRunning && idleCallback != null) {
@@ -222,30 +222,30 @@ synchronized void executed(RealCall call) {
 
 ```java
 Response getResponseWithInterceptorChain() throws IOException {
-    //��������
+    //拦截器链
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
-    //okHttpClient ����ʱ������Զ���������
+    //okHttpClient 构建时候传入的自定义拦截器
     interceptors.addAll(client.interceptors());
-    //ʧ�����ԣ��ض���������
+    //失败重试，重定向拦截器
     interceptors.add(retryAndFollowUpInterceptor);
-    //����ͷ
+    //请求头
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
-    //��������������ȡ�޸Ļ���
+    //缓存拦截器，读取修改缓存
     interceptors.add(new CacheInterceptor(client.internalCache()));
-    //������������������ʽ���� http ���������������
+    //网络连接拦截器，正式开启 http 请求，与服务器连接
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
-      //okHttpClient ����ʱ������Զ�������������
+      //okHttpClient 构建时候传入的自定义网络拦截器
       interceptors.addAll(client.networkInterceptors());
     }
-    //������������Ͷ�ȡ������Ӧ
+    //发送网络请求和读取网络响应
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
-	//RealInterceptorChain ͨ���ݹ��ͷ��Ȼÿ��ͨ�� index+1 �ֱ���������������ڸ����������Ĵ���
+	//RealInterceptorChain 通过递归掉头，然每次通过 index+1 分别完成拦截器集合内各个拦截器的处理
     return chain.proceed(originalRequest);
   }
 ```
@@ -326,13 +326,13 @@ Response getResponseWithInterceptorChain() throws IOException {
 
 ##### okhttp3.Dispatcher#executorService
 
-- �� okhttp3.ConnectionPool ����̳߳�һ��
-- �߼��൱�ڴ��ε� java.util.concurrent.Executors#newCachedThreadPool
+- 和 okhttp3.ConnectionPool 里的线程池一致
+- 逻辑相当于带参的 java.util.concurrent.Executors#newCachedThreadPool
 
 ```java
  public synchronized ExecutorService executorService() {
     if (executorService == null) {
-        //�ӳٳ�ʼ��
+        //延迟初始化
         //corePoolSize maximumPoolSize keepAliveTime unit workQueue
       executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
           new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
@@ -376,7 +376,7 @@ Response getResponseWithInterceptorChain() throws IOException {
       assert (!Thread.holdsLock(client.dispatcher()));
       boolean success = false;
       try {
-        //ִ�� NamedRunnable -> run -> okhttp3.RealCall.AsyncCall#execute
+        //执行 NamedRunnable -> run -> okhttp3.RealCall.AsyncCall#execute
         executorService.execute(this);
         success = true;
       } catch (RejectedExecutionException e) {
@@ -391,7 +391,7 @@ Response getResponseWithInterceptorChain() throws IOException {
       }
     }
 	//okhttp3.RealCall.AsyncCall#execute
-    //�˷����ڲ����Կ��� �ص��������߳���
+    //此方法内部可以看出 回掉是在子线程里
      @Override protected void execute() {
       boolean signalledCallback = false;
       timeout.enter();
@@ -399,11 +399,11 @@ Response getResponseWithInterceptorChain() throws IOException {
         Response response = getResponseWithInterceptorChain();
         if (retryAndFollowUpInterceptor.isCanceled()) {
           signalledCallback = true;
-          //�ص�ʧ�ܷ�����ȡ��
+          //回调失败方法：取消
           responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
         } else {
           signalledCallback = true;
-          //�ص��ɹ�����
+          //回调成功方法
           responseCallback.onResponse(RealCall.this, response);
         }
       } catch (IOException e) {
@@ -413,7 +413,7 @@ Response getResponseWithInterceptorChain() throws IOException {
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
           eventListener.callFailed(RealCall.this, e);
-            //�ص�ʧ�ܷ���
+            //回调失败方法
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
@@ -446,7 +446,7 @@ public abstract class NamedRunnable implements Runnable {
       Thread.currentThread().setName(oldName);
     }
   }
-  //����ʵ�� okhttp3.RealCall.AsyncCall#execute
+  //具体实现 okhttp3.RealCall.AsyncCall#execute
   protected abstract void execute();
 }
 ```
@@ -476,7 +476,7 @@ public abstract class NamedRunnable implements Runnable {
     Response priorResponse = null;
     //
     while (true) {
-      //ѭ�� ȡ��
+      //循环 取消
       if (canceled) {
         streamAllocation.release();
         throw new IOException("Canceled");
@@ -561,4 +561,4 @@ public abstract class NamedRunnable implements Runnable {
 
 
 
-![OkHttp ����ͼ](https://gitee.com/louisgeek/LG_Notes/raw/master/images/okhttp.png)
+![OkHttp 流程图](https://gitee.com/louisgeek/LG_Notes/raw/master/images/okhttp.png)
